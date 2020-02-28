@@ -1,7 +1,6 @@
 // Janosi Jozsef-Hunor
 // 522 csoport
-// jjim1825
-// Lab1
+// jjim182
 
 import java.io.*;
 import java.net.InetAddress;
