@@ -32,5 +32,6 @@ public class Client {
             //close resources
             ois.close();
             oos.close();
+        //szia hudi
     }
 }
