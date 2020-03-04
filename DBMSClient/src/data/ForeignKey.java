@@ -5,6 +5,12 @@ public class ForeignKey {
     private String refTableName;
     private String refAttrName;
 
+    public ForeignKey(String attrName, String refTableName, String refAttrName) {
+        this.attrName = attrName;
+        this.refTableName = refTableName;
+        this.refAttrName = refAttrName;
+    }
+
     public String getAttrName() {
         return attrName;
     }
