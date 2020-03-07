@@ -11,6 +11,11 @@ public class Database {
         tables = new ArrayList<>();
     }
 
+    @Override
+    public String toString() {
+        return dataBaseName;
+    }
+
     public void addTable(Table table) {
         tables.add(table);
     }

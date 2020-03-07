@@ -21,6 +21,11 @@ public class Table {
         foreignKeys = new ArrayList<>();
     }
 
+    @Override
+    public String toString() {
+        return tableName;
+    }
+
     public String getTableName() {
         return tableName;
     }
