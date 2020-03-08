@@ -60,9 +60,15 @@ public class Controller {
     @FXML
     private Pane ntPane;
     @FXML
+    private Pane ntfkPane1;
+    @FXML
+    private Pane ntfkPane2;
+    @FXML
     private Button ntCancelButton;
     @FXML
-    private Button ntOkButton;
+    private Button ntfkOKButton;
+    @FXML
+    private Button ntNextButton;
     @FXML
     private ChoiceBox<String> ntChoiceBoxT;
     @FXML
@@ -82,7 +88,9 @@ public class Controller {
     @FXML
     private ChoiceBox<String> ntChoiceBoxPK;
     @FXML
-    private TableColumn nameColumn;
+    private ChoiceBox<Table> ntfkChoiceBoxT;
+    @FXML
+    private ChoiceBox<String> ntfkChoiceBoxA;
     private ObservableList<String> selectedRow = FXCollections.observableArrayList();
 
     private ArrayList<Database> databases;
@@ -133,6 +141,12 @@ public class Controller {
             final TableColumn<ObservableList<String>, String> column3 = new TableColumn<>("Size");
             column3.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().get(2)));
             ntTableView.getColumns().add(column3);
+            final TableColumn<ObservableList<String>, String> column4 = new TableColumn<>("Ref. T");
+            column4.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().get(3)));
+            ntTableView.getColumns().add(column4);
+            final TableColumn<ObservableList<String>, String> column5 = new TableColumn<>("Ref. A");
+            column5.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().get(4)));
+            ntTableView.getColumns().add(column5);
 
             ntChoiceBoxDb.setValue(null);
             ntChoiceBoxDb.getItems().clear();
@@ -150,7 +164,6 @@ public class Controller {
         });
         ntCancelButton.setOnAction(e -> {
             hidePanes();
-            ntPane.setVisible(false);
         });
         // content of table view
         ObservableList<ObservableList<String>> data = FXCollections.observableArrayList();
@@ -161,6 +174,8 @@ public class Controller {
                 row.add(ntTextFieldN.getText());
                 row.add(ntChoiceBoxT.getValue());
                 row.add(ntTextFieldS.getText());
+                row.add("");
+                row.add("");
                 data.add(row);
                 ntTableView.setItems(data);
                 ntTextFieldN.setText("");
@@ -177,8 +192,11 @@ public class Controller {
             @Override
             public void changed(ObservableValue observableValue, Object oldValue, Object newValue) {
                 //Check whether item is selected and set value of selected item to Label
-                if(ntTableView.getSelectionModel().getSelectedItem() != null)
+                if(ntTableView.getSelectionModel().getSelectedItem() != null) {
                     setSelectedRow((ObservableList<String>) ntTableView.getSelectionModel().getSelectedItem());
+                    ntfkChoiceBoxT.setValue(null);
+                    ntfkChoiceBoxA.setValue(null);
+                }
             }
         });
         ntLeftButton.setOnAction(e -> {
@@ -191,12 +209,48 @@ public class Controller {
                 ntChoiceBoxPK.getItems().add(s.get(0));
             }
         });
-        ntOkButton.setOnAction(e -> {
-            // send to the server
-            if (!(ntChoiceBoxDb.getValue() == null || ntTextFieldT.getText().equals("") || ntChoiceBoxPK.getValue() == null)) {
-                System.out.println("nt " + ntTextFieldT.getText());
-                ntPane.setVisible(false);
+        ntNextButton.setOnAction(e -> {
+            if(!(ntChoiceBoxDb.getValue() == null || ntTextFieldT.getText().equals("") || ntChoiceBoxPK.getValue() == null)) {
+                // fill Fk table choice box
+                ntfkChoiceBoxT.setValue(null);
+                ntfkChoiceBoxT.getItems().clear();
+                for (Table temp : ntChoiceBoxDb.getValue().getTables()) {
+                    ntfkChoiceBoxT.getItems().add(temp);
+                }
+                // fill Fk attribute choice box
+                ntfkChoiceBoxT.getSelectionModel().selectedItemProperty().addListener((observableValue, old, current) -> {
+                    if (ntfkChoiceBoxT.getValue() != null) {
+                        ntfkChoiceBoxA.setValue(null);
+                        ntfkChoiceBoxA.getItems().clear();
+                        for (Attribute temp : ntfkChoiceBoxT.getValue().getAttributes()) {
+                            ntfkChoiceBoxA.getItems().add(temp.getAttributeName());
+                        }
+                    }
+                });
+                // when attribute chosen, update data list
+                ntfkChoiceBoxA.getSelectionModel().selectedItemProperty().addListener((observableValue, old, current) -> {
+                    System.out.println(selectedRow);
+                    if (selectedRow.size() > 0 && ntfkChoiceBoxA.getValue() != null) {
+                        data.remove(selectedRow);
+                        selectedRow.remove(4);
+                        selectedRow.remove(3);
+                        selectedRow.add(ntfkChoiceBoxT.getValue().getTableName());
+                        selectedRow.add(ntfkChoiceBoxA.getValue());
+                        data.add(selectedRow);
+                    }
+                });
+                ntfkPane1.setVisible(true);
+                ntfkPane2.setVisible(true);
+                ntChoiceBoxDb.setDisable(true);
+                ntTextFieldT.setDisable(true);
             }
+        });
+        ntfkOKButton.setOnAction(e -> {
+            // send to the server
+            System.out.println("nt " + ntTextFieldT.getText());
+            ntPane.setVisible(false);
+            ntfkPane1.setVisible(false);
+            ntfkPane2.setVisible(false);
         });
 
         // create new index file
@@ -312,6 +366,8 @@ public class Controller {
         ddbPane.setVisible(false);
         ntPane.setVisible(false);
         dtPane.setVisible(false);
+        ntfkPane1.setVisible(false);
+        ntfkPane2.setVisible(false);
     }
 
     public void setSelectedRow(ObservableList<String> list) {
