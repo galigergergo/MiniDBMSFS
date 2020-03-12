@@ -1,8 +1,9 @@
 package data;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class IndexFile {
+public class IndexFile implements Serializable {
     private String indexName;
     private int keyLength;
     private boolean isUnique;

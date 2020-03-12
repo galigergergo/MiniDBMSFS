@@ -1,6 +1,8 @@
 package data;
 
-public class ForeignKey {
+import java.io.Serializable;
+
+public class ForeignKey implements Serializable {
     private String attrName;
     private String refTableName;
     private String refAttrName;
