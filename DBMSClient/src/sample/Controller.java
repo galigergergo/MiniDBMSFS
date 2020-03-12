@@ -15,8 +15,10 @@ import javafx.scene.layout.Pane;
 
 import javax.xml.crypto.Data;
 import java.io.*;
+import java.lang.reflect.Array;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.regex.Pattern;
 
 public class Controller {
     @FXML
@@ -45,6 +47,8 @@ public class Controller {
     private Button ddbCancelButton;
     @FXML
     private Button ddbOkButton;
+    @FXML
+    private Button refreshButton;
     @FXML
     private ChoiceBox<Database> ddbChoiceBox;
     @FXML
@@ -115,7 +119,9 @@ public class Controller {
     private Button niCancelButton;
     @FXML
     private Button niOKButton;
+    // selected rows of table views
     private ObservableList<String> selectedRow = FXCollections.observableArrayList();
+    private ObservableList<String> niSelectedRow = FXCollections.observableArrayList();
 
     private ArrayList<Database> databases;
     private String[] attrTypes = {"int", "char", "varchar", "date"};
@@ -150,11 +156,11 @@ public class Controller {
         databases.add(db2);
 
         // initialize tree view
-        initTreeView();
+        refreshButton.setOnAction(e -> initTreeView());
 
         // create new database
-        System.out.println(databases);
         newDatabase.setOnAction(e -> {
+            ndbTextField.setText("");
             hidePanes();
             ndbPane.setVisible(true);
         });
@@ -163,10 +169,9 @@ public class Controller {
             // send to the server
             if (!ndbTextField.getText().equals("")) {
                 try {
+                    Database newDb = new Database(ndbTextField.getText());
                     dout.writeUTF("ndb");
-                    dout.writeUTF(ndbTextField.getText());
-                    //databases = (ArrayList<Database>) is.readObject();
-                    System.out.println(databases);
+                    os.writeObject(newDb);
                 } catch (Exception ex) {
                     System.out.println(ex);
                 }
@@ -175,7 +180,24 @@ public class Controller {
         });
 
         // create new table
+        // content of table view
+        ObservableList<ObservableList<String>> data = FXCollections.observableArrayList();
         newTable.setOnAction(e -> {
+            ntChoiceBoxDb.setValue(null);
+            ntChoiceBoxDb.setDisable(false);
+            ntTextFieldT.setText("");
+            ntTextFieldT.setDisable(false);
+            ntTextFieldN.setText("");
+            ntChoiceBoxT.setValue(null);
+            ntTextFieldS.setText("");
+            ntChoiceBoxPK.setValue(null);
+            ntTableView.getItems().clear();
+            data.clear();
+            ntfkChoiceBoxT.setValue(null);
+            ntfkChoiceBoxA.setValue(null);
+            hidePanes();
+            ntTableView.getColumns().clear();
+
             // create tableview columns
             final TableColumn<ObservableList<String>, String> column1 = new TableColumn<>("Name");
             column1.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().get(0)));
@@ -208,11 +230,9 @@ public class Controller {
             ntPane.setVisible(true);
         });
         ntCancelButton.setOnAction(e -> hidePanes());
-        // content of table view
-        ObservableList<ObservableList<String>> data = FXCollections.observableArrayList();
         ntRightButton.setOnAction(e -> {
             // insert into table view
-            if (!(ntTextFieldN.getText().equals("") || ntChoiceBoxT.getValue() == null || (ntTextFieldS.getText().equals("") && ntChoiceBoxT.getValue().equals("varchar")) || (!ntTextFieldS.getText().equals("") && !ntChoiceBoxT.getValue().equals("varchar")))) {
+            if (!(Pattern.matches("-?\\d+", ntTextFieldS.getText()) || ntTextFieldN.getText().equals("") || ntChoiceBoxT.getValue() == null || (ntTextFieldS.getText().equals("") && ntChoiceBoxT.getValue().equals("varchar")) || (!ntTextFieldS.getText().equals("") && !ntChoiceBoxT.getValue().equals("varchar")))) {
                 ObservableList<String> row = FXCollections.observableArrayList();
                 row.add(ntTextFieldN.getText());
                 row.add(ntChoiceBoxT.getValue());
@@ -237,8 +257,6 @@ public class Controller {
                 //Check whether item is selected and set value of selected item to Label
                 if (ntTableView.getSelectionModel().getSelectedItem() != null) {
                     setSelectedRow((ObservableList<String>) ntTableView.getSelectionModel().getSelectedItem());
-                    ntfkChoiceBoxT.setValue(null);
-                    ntfkChoiceBoxA.setValue(null);
                 }
             }
         });
@@ -272,14 +290,14 @@ public class Controller {
                 });
                 // when attribute chosen, update data list
                 ntfkChoiceBoxA.getSelectionModel().selectedItemProperty().addListener((observableValue, old, current) -> {
-                    System.out.println(selectedRow);
-                    if (selectedRow.size() > 0 && ntfkChoiceBoxA.getValue() != null) {
+                    if (selectedRow.get(0) != ntChoiceBoxPK.getValue() && selectedRow.size() > 0 && ntfkChoiceBoxA.getValue() != null) {
+                        ObservableList<String> selRow = selectedRow;
                         data.remove(selectedRow);
-                        selectedRow.remove(4);
-                        selectedRow.remove(3);
-                        selectedRow.add(ntfkChoiceBoxT.getValue().getTableName());
-                        selectedRow.add(ntfkChoiceBoxA.getValue());
-                        data.add(selectedRow);
+                        selRow.remove(4);
+                        selRow.remove(3);
+                        selRow.add(ntfkChoiceBoxT.getValue().getTableName());
+                        selRow.add(ntfkChoiceBoxA.getValue());
+                        data.add(selRow);
                     }
                 });
                 ntfkPane1.setVisible(true);
@@ -290,14 +308,45 @@ public class Controller {
         });
         ntfkOKButton.setOnAction(e -> {
             // send to the server
-            System.out.println("nt " + ntTextFieldT.getText());
-            hidePanes();
+            try {
+                Table newT = new Table(ntTextFieldT.getText(), "afilename", 123, ntChoiceBoxPK.getValue());
+                for(ObservableList<String> row : data) {
+                    // attributes
+                    int size = 0;
+                    if (!row.get(2).equals(""))
+                        size = Integer.parseInt(row.get(2));
+                    Attribute att = new Attribute(row.get(0), row.get(1), size, true);
+                    newT.addAttribute(att);
+
+                    // foreign keys
+                    if(!row.get(3).equals("")) {
+                        ForeignKey forK = new ForeignKey(row.get(0), row.get(3), row.get(4));
+                        newT.addForeignKey(forK);
+                    }
+                }
+                dout.writeUTF("nt");
+                dout.writeUTF(ntChoiceBoxDb.getValue().getDataBaseName());
+                os.writeObject(newT);
+            } catch (Exception ex) {
+                System.out.println(ex);
+            }
+            ntPane.setVisible(false);
         });
 
         // create new index file
+        // content of table view
+        ObservableList<ObservableList<String>> content = FXCollections.observableArrayList();
         newIndexFile.setOnAction(e -> {
+            hidePanes();
+            niTableView.getColumns().clear();
+            niChoiceBoxI.setValue(null);
+            niChoiceBoxA.setValue(null);
+            niTextFieldN.setText("");
+            niTextFieldL.setText("");
+            content.clear();
+
             final TableColumn<ObservableList<String>, String> column = new TableColumn<>("Attribute");
-            column.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().get(4)));
+            column.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().get(0)));
             niTableView.getColumns().add(column);
 
             niChoiceBoxDb.setValue(null);
@@ -314,11 +363,77 @@ public class Controller {
             }
             niPane.setVisible(true);
         });
+        niChoiceBoxDb.getSelectionModel().selectedItemProperty().addListener((observableValue, old, current) -> {
+            niTableView.getItems().clear();
+            niChoiceBoxT.setValue(null);
+            niChoiceBoxT.getItems().clear();
+            for (Table temp : current.getTables()) {
+                niChoiceBoxT.getItems().add(temp);
+            }
+        });
+        // list of currently selectable attributes
+        ArrayList<String> selectableA = new ArrayList<>();
+        niChoiceBoxT.getSelectionModel().selectedItemProperty().addListener((observableValue, old, current) -> {
+            niTableView.getItems().clear();
+            niChoiceBoxA.setValue(null);
+            niChoiceBoxA.getItems().clear();
+            for (Attribute temp : current.getAttributes()) {
+                niChoiceBoxA.getItems().add(temp.getAttributeName());
+                selectableA.add(temp.getAttributeName());
+            }
+        });
+        niRightButton.setOnAction(e -> {
+            // insert into table view
+            if (niChoiceBoxA.getValue() != null) {
+                ObservableList<String> row = FXCollections.observableArrayList();
+                String selected = niChoiceBoxA.getValue();
+                row.add(selected);
+                content.add(row);
+                niTableView.setItems(content);
+                niChoiceBoxA.getItems().clear();
+                selectableA.remove(selected);
+                for (String temp : selectableA) {
+                    niChoiceBoxA.getItems().add(temp);
+                }
+                niChoiceBoxA.setValue(null);
+            }
+        });
+        // update selected row of table view
+        niTableView.getSelectionModel().selectedItemProperty().addListener((observableValue, oldValue, newValue) -> {
+            //Check whether item is selected and set value of selected item to Label
+            if (niTableView.getSelectionModel().getSelectedItem() != null) {
+                setNiSelectedRow((ObservableList<String>) niTableView.getSelectionModel().getSelectedItem());
+            }
+        });
+        niLeftButton.setOnAction(e -> {
+            String selected = niSelectedRow.get(0);
+            content.remove(niSelectedRow);
+            niChoiceBoxA.getItems().clear();
+            selectableA.add(selected);
+            for (String temp : selectableA) {
+                niChoiceBoxA.getItems().add(temp);
+            }
+            niChoiceBoxA.setValue(niSelectedRow.get(0));
+        });
         niCancelButton.setOnAction(e -> hidePanes());
         niOKButton.setOnAction(e -> {
             // send to the server
-            System.out.println("ni " + niTextFieldN.getText());
-            hidePanes();
+            if(Pattern.matches("-?\\d+", niTextFieldL.getText()) && niChoiceBoxT.getValue() != null && niChoiceBoxI.getValue() != null && !niTextFieldL.getText().equals("") && !niTextFieldN.getText().equals("")) {
+                // send to the server
+                IndexFile newI = new IndexFile(niTextFieldN.getText(), Integer.parseInt(niTextFieldL.getText()), true, niChoiceBoxI.getValue());
+                for(ObservableList<String> row : content) {
+                    newI.addAttributes(row.get(0));
+                }
+                try {
+                    dout.writeUTF("ni");
+                    dout.writeUTF(niChoiceBoxDb.getValue().getDataBaseName());
+                    dout.writeUTF(niChoiceBoxT.getValue().getTableName());
+                    os.writeObject(newI);
+                } catch (Exception ex) {
+                    System.out.println(ex);
+                }
+                niPane.setVisible(false);
+            }
         });
 
         // delete database
@@ -334,9 +449,14 @@ public class Controller {
         });
         ddbCancelButton.setOnAction(e -> ddbPane.setVisible(false));
         ddbOkButton.setOnAction(e -> {
-            // send to the server
             if (ddbChoiceBox.getValue() != null) {
-                System.out.println("ddb " + ddbChoiceBox.getValue().getDataBaseName());
+                // send to the server
+                try {
+                    dout.writeUTF("ddb");
+                    dout.writeUTF(ddbChoiceBox.getValue().getDataBaseName());
+                } catch (Exception ex) {
+                    System.out.println(ex);
+                }
                 ddbPane.setVisible(false);
             }
         });
@@ -361,9 +481,15 @@ public class Controller {
         });
         dtCancelButton.setOnAction(e -> dtPane.setVisible(false));
         dtOkButton.setOnAction(e -> {
-            // send to the server
             if (dtChoiceBoxDb.getValue() != null && dtChoiceBoxT.getValue() != null) {
-                System.out.println("dt " + dtChoiceBoxDb.getValue().getDataBaseName() + " " + dtChoiceBoxT.getValue().getTableName());
+                // send to the server
+                try {
+                    dout.writeUTF("dt");
+                    dout.writeUTF(dtChoiceBoxDb.getValue().getDataBaseName());
+                    dout.writeUTF(dtChoiceBoxT.getValue().getTableName());
+                } catch (Exception ex) {
+                    System.out.println(ex);
+                }
                 dtPane.setVisible(false);
             }
         });
@@ -371,7 +497,7 @@ public class Controller {
     }
 
 
-    private void initTreeView() {
+    public void initTreeView() {
         TreeItem<String> rootItem = new TreeItem<>("Databases");
 
         for(Database temp : databases) {
@@ -435,11 +561,12 @@ public class Controller {
         selectedRow = list;
     }
 
+    public void setNiSelectedRow(ObservableList<String> list) {
+        niSelectedRow = list;
+    }
+
     public void setDatabases(ArrayList<Database> list) {
         this.databases = list;
     }
 
 }
-
-
-
