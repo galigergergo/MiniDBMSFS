@@ -52,7 +52,7 @@ public class Main {
                     dbName = din.readUTF();
                     Table newT = (Table) is.readObject();
                     for(Database temp : databases) {
-                        if(temp.getDataBaseName() == dbName) {
+                        if(temp.getDataBaseName().equals(dbName)) {
                             temp.addTable(newT);
                             break;
                         }
@@ -64,10 +64,11 @@ public class Main {
                     dbName = din.readUTF();
                     tName = din.readUTF();
                     IndexFile newI = (IndexFile) is.readObject();
+
                     for(Database temp : databases) {
-                        if(temp.getDataBaseName() == dbName) {
+                        if(temp.getDataBaseName().equals(dbName)) {
                             for(Table tempT : temp.getTables()) {
-                                if(tempT.getTableName() == tName) {
+                                if(tempT.getTableName().equals(tName)) {
                                     tempT.addIndexFile(newI);
                                 }
                                 break;
@@ -81,7 +82,7 @@ public class Main {
                 case "ddb":
                     dbName = din.readUTF();
                     for(Database temp : databases) {
-                        if(temp.getDataBaseName() == dbName) {
+                        if(temp.getDataBaseName().equals(dbName)) {
                             databases.remove(temp);
                             break;
                         }
@@ -93,9 +94,9 @@ public class Main {
                     dbName = din.readUTF();
                     tName = din.readUTF();
                     for(Database temp : databases) {
-                        if(temp.getDataBaseName() == dbName) {
+                        if(temp.getDataBaseName().equals(dbName)) {
                             for(Table tempT : temp.getTables()) {
-                                if(tempT.getTableName() == tName) {
+                                if(tempT.getTableName().equals(tName)) {
                                     temp.getTables().remove(tempT);
                                 }
                                 break;

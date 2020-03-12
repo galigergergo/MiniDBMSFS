@@ -10,6 +10,14 @@ public class IndexFile implements Serializable {
     private String indexType;
     private ArrayList<String> attributes;
 
+    public IndexFile(String indexName, int keyLength, boolean isUnique, String indexType) {
+        this.indexName = indexName;
+        this.keyLength = keyLength;
+        this.isUnique = isUnique;
+        this.indexType = indexType;
+        attributes = new ArrayList<>();
+    }
+
     public String getIndexName() {
         return indexName;
     }
