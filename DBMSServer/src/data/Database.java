@@ -5,11 +5,11 @@ import java.util.ArrayList;
 
 public class Database implements Serializable {
     private String dataBaseName;
-    private ArrayList<Table> tables;
+    private ArrayList<Table> Tables;
 
     public Database(String dataBaseName) {
         this.dataBaseName = dataBaseName;
-        tables = new ArrayList<>();
+        Tables = new ArrayList<>();
     }
 
     @Override
@@ -18,7 +18,7 @@ public class Database implements Serializable {
     }
 
     public void addTable(Table table) {
-        tables.add(table);
+        Tables.add(table);
     }
 
     public String getDataBaseName() {
@@ -30,6 +30,6 @@ public class Database implements Serializable {
     }
 
     public ArrayList<Table> getTables() {
-        return tables;
+        return Tables;
     }
 }
