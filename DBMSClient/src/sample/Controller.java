@@ -123,7 +123,8 @@ public class Controller {
     private ObservableList<String> selectedRow = FXCollections.observableArrayList();
     private ObservableList<String> niSelectedRow = FXCollections.observableArrayList();
 
-    private ArrayList<Database> databases;
+    private DataBases databases;
+
     private String[] attrTypes = {"int", "char", "varchar", "date"};
     private String[] indexTypes = {"type1", "type2"};
 
@@ -141,7 +142,6 @@ public class Controller {
         socketListenerThread.start();
 
         // get database list from the server
-        databases = new ArrayList<>();
         Database db = new Database("db1");
         Table tb = new Table("t1", "t1.ta", 300, "asd");
         Attribute attr = new Attribute("att1", "varchar", 30, false);
@@ -152,8 +152,8 @@ public class Controller {
         tb.addForeignKey(fk);
         db.addTable(tb);
         Database db2 = new Database("db2");
-        databases.add(db);
-        databases.add(db2);
+        databases.Databases.add(db);
+        databases.Databases.add(db2);
 
         // initialize tree view
         refreshButton.setOnAction(e -> initTreeView());
@@ -218,7 +218,7 @@ public class Controller {
             ntChoiceBoxDb.setValue(null);
             ntChoiceBoxDb.getItems().clear();
             // fill choice box
-            for (Database temp : databases) {
+            for (Database temp : databases.Databases) {
                 ntChoiceBoxDb.getItems().add(temp);
             }
             ntChoiceBoxT.setValue(null);
@@ -352,7 +352,7 @@ public class Controller {
             niChoiceBoxDb.setValue(null);
             niChoiceBoxDb.getItems().clear();
             // fill choice box
-            for (Database temp : databases) {
+            for (Database temp : databases.Databases) {
                 niChoiceBoxDb.getItems().add(temp);
             }
             niChoiceBoxI.setValue(null);
@@ -441,7 +441,7 @@ public class Controller {
             ddbChoiceBox.setValue(null);
             ddbChoiceBox.getItems().clear();
             // fill choice box
-            for (Database temp : databases) {
+            for (Database temp : databases.Databases) {
                 ddbChoiceBox.getItems().add(temp);
             }
             hidePanes();
@@ -466,7 +466,7 @@ public class Controller {
             dtChoiceBoxDb.setValue(null);
             dtChoiceBoxDb.getItems().clear();
             // fill database choice box
-            for (Database temp : databases) {
+            for (Database temp : databases.Databases) {
                 dtChoiceBoxDb.getItems().add(temp);
             }
             hidePanes();
@@ -500,7 +500,7 @@ public class Controller {
     public void initTreeView() {
         TreeItem<String> rootItem = new TreeItem<>("Databases");
 
-        for(Database temp : databases) {
+        for(Database temp : databases.Databases) {
             TreeItem<String> dbItem = new TreeItem<>(temp.getDataBaseName());
             for(Table table : temp.getTables()) {
                 TreeItem<String> tableItem = new TreeItem<>(table.getTableName());
@@ -566,7 +566,7 @@ public class Controller {
     }
 
     public void setDatabases(ArrayList<Database> list) {
-        this.databases = list;
+        this.databases.Databases = list;
     }
 
 }
