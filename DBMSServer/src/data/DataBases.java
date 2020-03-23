@@ -70,7 +70,7 @@ public class DataBases {
 
         String json = gson.toJson(db);
 
-        String filename = "DATA.json";
+        String filename = "DATA";
         WriteToFile(filename, json);
     }
 }

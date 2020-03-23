@@ -41,6 +41,12 @@
                   <MenuItem fx:id="delTable" mnemonicParsing="false" text="Table" />
                  </items>
                 </Menu>
+                <Menu mnemonicParsing="false" text="Manipulation">
+                  <items>
+                   <MenuItem fx:id="insert" mnemonicParsing="false" text="Insert" />
+                   <MenuItem fx:id="delete" mnemonicParsing="false" text="Delete" />
+                  </items>
+                </Menu>
               </menus>
             </MenuBar>
             <Pane fx:id="ndbPane" layoutX="240.0" layoutY="40.0" prefHeight="200.0" prefWidth="380.0" style="-fx-background-color: #333333;" visible="false">
@@ -242,6 +248,85 @@
                   <TextField fx:id="ndbTextField1" alignment="TOP_CENTER" layoutX="148.0" layoutY="98.0" prefHeight="25.0" prefWidth="200.0" style="-fx-background-color: #AAAAAA;" />
                   <Button fx:id="ndbCancelButton1" layoutX="296.0" layoutY="148.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="Cancel" textFill="WHITE" />
                   <Button fx:id="ndbOkButton1" layoutX="248.0" layoutY="148.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="OK" textFill="WHITE" />
+               </children>
+            </Pane>
+            <Pane fx:id="insertPane" layoutX="240.0" layoutY="38.0" prefHeight="425.0" prefWidth="380.0" style="-fx-background-color: #333333;" visible="false">
+               <children>
+                  <Label layoutX="22.0" layoutY="100.0" text="Database name:" textFill="WHITE">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </Label>
+                  <Label layoutX="22.0" layoutY="14.0" text="Insert" textFill="WHITE">
+                     <font>
+                        <Font size="34.0" />
+                     </font>
+                  </Label>
+                  <Button fx:id="insertOKButton" layoutX="258.0" layoutY="386.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="OK" textFill="WHITE" />
+                  <Button fx:id="insertCancelButton" layoutX="296.0" layoutY="386.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="Cancel" textFill="WHITE" />
+                  <ChoiceBox fx:id="insertChoiceBoxDb" layoutX="148.0" layoutY="98.0" prefHeight="25.0" prefWidth="200.0" />
+                  <Label layoutX="22.0" layoutY="138.0" text="Table name:" textFill="WHITE">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </Label>
+                  <TableView fx:id="insertTableView" layoutX="186.0" layoutY="187.0" prefHeight="184.0" prefWidth="160.0" />
+                  <Label layoutX="22.0" layoutY="238.0" text="Attribute:" textFill="WHITE">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </Label>
+                  <ChoiceBox fx:id="insertChoiceBoxA" layoutX="15.0" layoutY="259.0" prefHeight="25.0" prefWidth="140.0" />
+                  <Label layoutX="24.0" layoutY="291.0" text="Value:" textFill="WHITE">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </Label>
+                  <TextField fx:id="insertTextFieldV" layoutX="15.0" layoutY="312.0" prefHeight="25.0" prefWidth="140.0" />
+                  <Button fx:id="insertLeftButton" layoutX="174.0" layoutY="386.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="&lt;" textFill="WHITE" />
+                  <Button fx:id="insertRightButton" layoutX="206.0" layoutY="386.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="&gt;" textFill="WHITE" />
+                  <ChoiceBox fx:id="insertChoiceBoxT" layoutX="148.0" layoutY="136.0" prefHeight="25.0" prefWidth="200.0" />
+               </children>
+            </Pane>
+            <Pane fx:id="deletePane" layoutX="240.0" layoutY="38.0" prefHeight="335.0" prefWidth="380.0" style="-fx-background-color: #333333;" visible="false">
+               <children>
+                  <Label layoutX="22.0" layoutY="100.0" text="Database name:" textFill="WHITE">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </Label>
+                  <Label layoutX="22.0" layoutY="14.0" text="Delete" textFill="WHITE">
+                     <font>
+                        <Font size="34.0" />
+                     </font>
+                  </Label>
+                  <Button fx:id="deleteOKButton" layoutX="258.0" layoutY="288.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="OK" textFill="WHITE" />
+                  <Button fx:id="deleteCancelButton" layoutX="296.0" layoutY="288.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="Cancel" textFill="WHITE" />
+                  <ChoiceBox fx:id="deleteChoiceBoxDb" layoutX="148.0" layoutY="98.0" prefHeight="25.0" prefWidth="200.0" />
+                  <Label layoutX="22.0" layoutY="138.0" text="Table name:" textFill="WHITE">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </Label>
+                  <Label layoutX="24.0" layoutY="174.0" text="Attribute:" textFill="WHITE">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </Label>
+                  <ChoiceBox fx:id="deleteChoiceBoxA" layoutX="148.0" layoutY="172.0" prefHeight="25.0" prefWidth="200.0" />
+                  <Label layoutX="24.0" layoutY="249.0" prefHeight="21.0" prefWidth="77.0" text="Value:" textFill="WHITE">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </Label>
+                  <TextField fx:id="deleteTextFieldV" layoutX="148.0" layoutY="247.0" prefHeight="25.0" prefWidth="200.0" />
+                  <Label layoutX="22.0" layoutY="213.0" prefHeight="21.0" prefWidth="81.0" text="Operator:" textFill="WHITE">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </Label>
+                  <ChoiceBox fx:id="deleteChoiceBoxO" layoutX="148.0" layoutY="211.0" prefHeight="25.0" prefWidth="200.0" />
+                  <ChoiceBox fx:id="deleteChoiceBoxT" layoutX="148.0" layoutY="136.0" prefHeight="25.0" prefWidth="200.0" />
                </children>
             </Pane>
          </children>

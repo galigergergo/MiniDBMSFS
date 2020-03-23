@@ -1,153 +1,80 @@
 {
   "Databases": [
     {
+      "dataBaseName": "db1",
       "Tables": [
         {
+          "tableName": "t1",
+          "fileName": "t1.ta",
+          "rowLength": 300,
           "attributes": [
             {
-              "attributeName": "poi_id",
-              "type": "char",
-              "length": "64",
-              "isnull": "0"
+              "attributeName": "att2",
+              "type": "varchar",
+              "length": 30,
+              "isnull": false
             },
             {
-              "attributeName": "latitude",
-              "type": "double",
-              "isnull": "0"
-            },
-            {
-              "attributeName": "latitude",
-              "type": "double",
-              "isnull": "0"
+              "attributeName": "att1",
+              "type": "varchar",
+              "length": 30,
+              "isnull": false
             }
           ],
-          "pKAttrName": "poi_id",
-          "indexFiles": [
-            {
-              "Attributes": [
-                "latitude"
-              ],
-              "indexName": "geoLat.ind",
-              "keyLength": "25",
-              "isUnique": "0",
-              "indexType": "BTree"
-            },
-            {
-              "Attributes": [
-                "longitude"
-              ],
-              "indexName": "geoLong.ind",
-              "keyLength": "25",
-              "isUnique": "0",
-              "indexType": "BTree"
-            }
-          ],
-          "tableName": "geo",
-          "fileName": "geo.kv",
-          "rowLength": "114"
-        },
-        {
-          "attributes": [
-            {
-              "attributeName": "poi_id",
-              "type": "char",
-              "length": "64",
-              "isnull": "0"
-            },
-            {
-              "attributeName": "language",
-              "type": "int",
-              "isnull": "0"
-            },
-            {
-              "attributeName": "poiName",
-              "type": "char",
-              "length": "255",
-              "isnull": "0"
-            }
-          ],
-          "pKAttrName": "poi_id",
+          "pKAttrName": "att2",
           "foreignKeys": [
             {
-              "attrName": "poi_id",
-              "refTableName": "geo",
-              "refAttrName": "poi_id"
+              "attrName": "att1",
+              "refTableName": "tb2",
+              "refAttrName": "att1"
             }
           ],
-          "uniqueKeys": {
-            "UniqueAttribute": "???"
-          },
-          "indexFiles": [
-            {
-              "attributes": [
-                "poi_id"
-              ],
-              "indexName": "poi_poid.ind",
-              "keyLength": "64",
-              "isUnique": "0",
-              "indexType": "BTree"
-            },
-            {
-              "attributes": [
-                "poiName"
-              ],
-              "indexName": "poiName.ind",
-              "keyLength": "255",
-              "isUnique": "1",
-              "indexType": "BTree"
-            }
-          ],
-          "tableName": "poi",
-          "fileName": "poi.kv",
-          "rowLength": "300"
+          "indexFiles": []
         }
-      ],
-      "dataBaseName": "Premium"
+      ]
     },
     {
-      "dataBaseName": "University",
+      "dataBaseName": "nmbmn",
+      "Tables": []
+    },
+    {
+      "dataBaseName": "mmm",
+      "Tables": []
+    },
+    {
+      "dataBaseName": "nbnb",
+      "Tables": []
+    },
+    {
+      "dataBaseName": "MyDb",
       "Tables": [
         {
+          "tableName": "MyTable",
+          "fileName": "afilename",
+          "rowLength": 123,
           "attributes": [
             {
-              "attributeName": "Specid",
-              "type": "char",
-              "length": "3",
-              "isnull": "0"
+              "attributeName": "Name",
+              "type": "varchar",
+              "length": 20,
+              "isnull": true
             },
             {
-              "attributeName": "SpecName",
-              "type": "varchar",
-              "length": "30",
-              "isnull": "0"
+              "attributeName": "ID",
+              "type": "int",
+              "length": 0,
+              "isnull": true
             },
             {
-              "attributeName": "Language",
-              "type": "varchar",
-              "length": "20",
-              "isnull": "0"
+              "attributeName": "Price",
+              "type": "int",
+              "length": 0,
+              "isnull": true
             }
           ],
-          "primaryKey": {
-            "pkAttrName": "Specid"
-          },
-          "uniqueKeys": {
-            "UniqueAttribute": "SpecName"
-          },
-          "indexFiles": [
-            {
-              "attributes": [
-                "SpecName"
-              ],
-              "indexName": "SpecName.ind",
-              "keyLength": "30",
-              "isUnique": "1",
-              "indexType": "BTree"
-            }
-          ],
-          "tableName": "Specialization",
-          "fileName": "Spec.bin",
-          "rowLength": "53"
+          "pKAttrName": "ID",
+          "foreignKeys": [],
+          "indexFiles": []
         }
       ]
     }

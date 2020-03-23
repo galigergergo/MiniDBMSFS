@@ -46,4 +46,9 @@ public class Attribute implements Serializable {
     public void setIsnull(boolean isnull) {
         this.isnull = isnull;
     }
+
+    @Override
+    public String toString() {
+        return attributeName;
+    }
 }
