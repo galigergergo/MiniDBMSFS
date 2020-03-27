@@ -632,17 +632,21 @@ public class Controller {
                 // send to the server
                 try {
                     String key = "";
+                    // attributes to the values
+                    StringBuilder attrs = new StringBuilder();
                     StringBuilder value = new StringBuilder();
                     for (ObservableList<String> row : insertData) {
-                        if (row.get(0).equals(insertChoiceBoxT.getValue().getpKAttrName()))
+                        if (row.get(0).equals(insertChoiceBoxT.getValue().getpKAttrName())) {
                             key = row.get(1);
+                        }
                     }
                     for (Attribute attr : insertChoiceBoxT.getValue().getAttributes()) {
                         for (ObservableList<String> row : insertData) {
-                            if (!row.get(0).equals(insertChoiceBoxT.getValue().getpKAttrName()) && row.get(0).equals(attr.getAttributeName()))
-                                value.append(row.get(1));
+                            if (!row.get(0).equals(insertChoiceBoxT.getValue().getpKAttrName()) && row.get(0).equals(attr.getAttributeName())) {
+                                attrs.append(row.get(0)).append("#");
+                                value.append(row.get(1)).append("#");
+                            }
                         }
-                        value.append("#");
                     }
 
                     os.writeUTF("insert");
@@ -652,6 +656,8 @@ public class Controller {
                     os.writeUTF(insertChoiceBoxT.getValue().getTableName());
                     os.flush();
                     os.writeUTF(key);
+                    os.flush();
+                    os.writeUTF(attrs.toString());
                     os.flush();
                     os.writeUTF(value.toString());
                     os.flush();

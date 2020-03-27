@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="mongodb-driver-core-3.9.1">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/DBMSServer/mongodb-driver-core-3.9.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/DBMSServer/mongodb-driver-3.9.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/DBMSServer/bson-3.9.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

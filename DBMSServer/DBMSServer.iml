@@ -7,7 +7,10 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="gson-2.8.61" level="project" />
     <orderEntry type="library" name="gson-2.8.6" level="project" />
-    <orderEntry type="library" name="gson-2.8.6 (2)" level="project" />
+    <orderEntry type="library" name="gson-2.8.62" level="project" />
+    <orderEntry type="library" name="mongodb-driver-3.4.3" level="project" />
+    <orderEntry type="library" name="mongodb-driver-core-3.9.1" level="project" />
   </component>
 </module>
