@@ -4,10 +4,9 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
-import data.DataBases;
-import data.Database;
-import data.IndexFile;
-import data.Table;
+import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.Indexes;
+import data.*;
 import org.bson.Document;
 
 import java.io.ObjectInputStream;
@@ -118,9 +117,40 @@ public class Main {
                     case "nt":
                         dbName = is.readUTF();
                         Table newT = (Table) is.readObject();
+
+                        // create MANGO database and collection
+                        mongoDatabase = mongoClients.getDatabase(dbName);
+                        mongoDatabase.createCollection(newT.getTableName());
+
+                        // create index in MANGO for unique and foreign key attributes
+                        mongoCollection = mongoDatabase.getCollection(newT.getTableName());
+                        IndexOptions indexOptions = new IndexOptions().unique(true);
+                        IndexFile index = new IndexFile(newT.getpKAttrName() + "Index", false, newT.getpKAttrName());
+                        newT.addIndexFile(index);
+                        for (Attribute attr : newT.getAttributes()) {
+                            if (!attr.getAttributeName().equals(newT.getpKAttrName())) {
+                                if (attr.getIsUnique()) {
+                                    indexOptions.unique(true);
+                                    mongoCollection.createIndex(Indexes.ascending(attr.getAttributeName()), indexOptions);
+                                    index = new IndexFile(attr.getAttributeName() + "Index", true, attr.getAttributeName());
+                                    newT.addIndexFile(index);
+                                } else {
+                                    for (ForeignKey fk : newT.getForeignKeys()) {
+                                        if (fk.getAttrName().equals(attr.getAttributeName())) {
+                                            indexOptions.unique(false);
+                                            mongoCollection.createIndex(Indexes.ascending(attr.getAttributeName()), indexOptions);
+                                            index = new IndexFile(attr.getAttributeName() + "Index", false, attr.getAttributeName());
+                                            newT.addIndexFile(index);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         for (Database temp : databases.Databases) {
                             if (temp.getDataBaseName().equals(dbName)) {
                                 temp.addTable(newT);
+                                System.out.println(newT.getAttributes().get(0).getIsUnique());
                                 break;
                             }
                         }
@@ -151,6 +181,11 @@ public class Main {
 
                         // write updated databases to JSON files
                         DataBases.ToJson(databases);
+
+                        // create index in MANGO
+                        mongoDatabase = mongoClients.getDatabase(dbName);
+                        mongoCollection = mongoDatabase.getCollection(tName);
+                        mongoCollection.createIndex(Indexes.ascending(newI.getAttribute()));
 
                         os.writeObject(databases.Databases);      // send updated database list
                         os.flush();

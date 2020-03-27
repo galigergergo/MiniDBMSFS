@@ -6,13 +6,13 @@ public class Attribute implements Serializable {
     String attributeName;
     String type;
     int length;
-    boolean isnull;
+    boolean isUnique;
 
-    public Attribute(String attributeName, String type, int length, boolean isnull) {
+    public Attribute(String attributeName, String type, int length, boolean isUnique) {
         this.attributeName = attributeName;
         this.type = type;
         this.length = length;
-        this.isnull = isnull;
+        this.isUnique = isUnique;
     }
 
     public String getAttributeName() {
@@ -39,12 +39,12 @@ public class Attribute implements Serializable {
         this.length = length;
     }
 
-    public boolean isIsnull() {
-        return isnull;
+    public boolean getIsUnique() {
+        return isUnique;
     }
 
-    public void setIsnull(boolean isnull) {
-        this.isnull = isnull;
+    public void setIsUnique(boolean isUnique) {
+        this.isUnique = isUnique;
     }
 
     @Override

@@ -154,7 +154,8 @@
                      </font>
                   </Label>
                   <ChoiceBox fx:id="ntChoiceBoxPK" layoutX="15.0" layoutY="364.0" prefHeight="25.0" prefWidth="140.0" />
-                  <Pane fx:id="ntfkPane1" layoutX="8.0" layoutY="175.0" prefHeight="249.0" prefWidth="160.0" style="-fx-background-color: #333333;" visible="false">
+                  <ChoiceBox fx:id="ntChoiceBoxU" layoutX="15.0" layoutY="401.0" prefHeight="25.0" prefWidth="140.0" />
+                  <Pane fx:id="ntfkPane1" layoutX="8.0" layoutY="175.0" prefHeight="258.0" prefWidth="160.0" style="-fx-background-color: #333333;" visible="false">
                      <children>
                         <Label layoutX="14.0" layoutY="75.0" text="Reference table:" textFill="WHITE">
                            <font>
@@ -182,7 +183,7 @@
                   </Pane>
                </children>
             </Pane>
-            <Pane fx:id="niPane" layoutX="240.0" layoutY="40.0" prefHeight="425.0" prefWidth="380.0" style="-fx-background-color: #333333;" visible="false">
+            <Pane fx:id="niPane" layoutX="240.0" layoutY="38.0" prefHeight="301.0" prefWidth="380.0" style="-fx-background-color: #333333;" visible="false">
                <children>
                   <Label layoutX="22.0" layoutY="100.0" text="Database name:" textFill="WHITE">
                      <font>
@@ -194,8 +195,8 @@
                         <Font size="34.0" />
                      </font>
                   </Label>
-                  <Button fx:id="niOKButton" layoutX="248.0" layoutY="386.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="OK" textFill="WHITE" />
-                  <Button fx:id="niCancelButton" layoutX="296.0" layoutY="386.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="Cancel" textFill="WHITE" />
+                  <Button fx:id="niOKButton" layoutX="248.0" layoutY="259.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="OK" textFill="WHITE" />
+                  <Button fx:id="niCancelButton" layoutX="296.0" layoutY="259.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="Cancel" textFill="WHITE" />
                   <ChoiceBox fx:id="niChoiceBoxDb" layoutX="148.0" layoutY="98.0" prefHeight="25.0" prefWidth="200.0" />
                   <Label layoutX="22.0" layoutY="138.0" text="Table name:" textFill="WHITE">
                      <font>
@@ -209,27 +210,12 @@
                         <Font size="15.0" />
                      </font>
                   </Label>
-                  <TextField fx:id="niTextFieldL" layoutX="19.0" layoutY="292.0" prefHeight="25.0" prefWidth="166.0" />
-                  <Label layoutX="19.0" layoutY="266.0" text="Key Length:" textFill="WHITE">
+                  <Label layoutX="22.0" layoutY="213.0" text="Attribute name:" textFill="WHITE">
                      <font>
                         <Font size="15.0" />
                      </font>
                   </Label>
-                  <Label layoutX="19.0" layoutY="213.0" text="Index File Type:" textFill="WHITE">
-                     <font>
-                        <Font size="15.0" />
-                     </font>
-                  </Label>
-                  <ChoiceBox fx:id="niChoiceBoxI" layoutX="19.0" layoutY="239.0" prefHeight="25.0" prefWidth="166.0" />
-                  <TableView fx:id="niTableView" layoutX="204.0" layoutY="213.0" prefHeight="158.0" prefWidth="146.0" />
-                  <Label layoutX="21.0" layoutY="320.0" text="Attribute name:" textFill="WHITE">
-                     <font>
-                        <Font size="15.0" />
-                     </font>
-                  </Label>
-                  <ChoiceBox fx:id="niChoiceBoxA" layoutX="19.0" layoutY="346.0" prefHeight="25.0" prefWidth="166.0" />
-                  <Button fx:id="niLeftButton" layoutX="173.0" layoutY="386.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="&lt;" textFill="WHITE" />
-                  <Button fx:id="niRightButton" layoutX="204.0" layoutY="386.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="&gt;" textFill="WHITE" />
+                  <ChoiceBox fx:id="niChoiceBoxA" layoutX="148.0" layoutY="211.0" prefHeight="25.0" prefWidth="200.0" />
                </children>
             </Pane>
             <Button fx:id="refreshButton" layoutX="153.0" layoutY="440.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="Refresh" textFill="WHITE" />

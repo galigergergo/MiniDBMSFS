@@ -5,17 +5,13 @@ import java.util.ArrayList;
 
 public class IndexFile implements Serializable {
     private String indexName;
-    private int keyLength;
     private boolean isUnique;
-    private String indexType;
-    private ArrayList<String> attributes;
+    private String attribute;
 
-    public IndexFile(String indexName, int keyLength, boolean isUnique, String indexType) {
+    public IndexFile(String indexName, boolean isUnique, String attribute) {
         this.indexName = indexName;
-        this.keyLength = keyLength;
         this.isUnique = isUnique;
-        this.indexType = indexType;
-        attributes = new ArrayList<>();
+        this.attribute = attribute;
     }
 
     public String getIndexName() {
@@ -26,14 +22,6 @@ public class IndexFile implements Serializable {
         this.indexName = indexName;
     }
 
-    public int getKeyLength() {
-        return keyLength;
-    }
-
-    public void setKeyLength(int keyLength) {
-        this.keyLength = keyLength;
-    }
-
     public boolean isUnique() {
         return isUnique;
     }
@@ -42,19 +30,11 @@ public class IndexFile implements Serializable {
         isUnique = unique;
     }
 
-    public String getIndexType() {
-        return indexType;
+    public String getAttribute() {
+        return attribute;
     }
 
-    public void setIndexType(String indexType) {
-        this.indexType = indexType;
-    }
-
-    public ArrayList<String> getAttributes() {
-        return attributes;
-    }
-
-    public void addAttributes(String attribute) {
-        attributes.add(attribute);
+    public void setAttribute(String attribute) {
+        this.attribute = attribute;
     }
 }
