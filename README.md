@@ -1,2 +1,2 @@
 # MiniDBMSFS
-Hehe Szia Hudi
+Fu en pusholtam mindent. az a .idea valszeg nem kell lol
