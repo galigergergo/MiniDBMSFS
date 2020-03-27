@@ -1,0 +1,95 @@
+{
+  "Databases": [
+    {
+      "dataBaseName": "db1",
+      "Tables": [
+        {
+          "tableName": "t1",
+          "fileName": "t1.ta",
+          "rowLength": 300,
+          "attributes": [
+            {
+              "attributeName": "att2",
+              "type": "varchar",
+              "length": 30,
+              "isnull": false
+            },
+            {
+              "attributeName": "att1",
+              "type": "varchar",
+              "length": 30,
+              "isnull": false
+            }
+          ],
+          "pKAttrName": "att2",
+          "foreignKeys": [
+            {
+              "attrName": "att1",
+              "refTableName": "tb2",
+              "refAttrName": "att1"
+            }
+          ],
+          "indexFiles": []
+        }
+      ]
+    },
+    {
+      "dataBaseName": "nmbmn",
+      "Tables": [
+        {
+          "tableName": "hello",
+          "fileName": "afilename",
+          "rowLength": 123,
+          "attributes": [
+            {
+              "attributeName": "szia",
+              "type": "varchar",
+              "length": 30,
+              "isnull": true
+            }
+          ],
+          "pKAttrName": "szia",
+          "foreignKeys": [],
+          "indexFiles": []
+        }
+      ]
+    },
+    {
+      "dataBaseName": "mmm",
+      "Tables": []
+    },
+    {
+      "dataBaseName": "MyDb",
+      "Tables": [
+        {
+          "tableName": "MyTable",
+          "fileName": "afilename",
+          "rowLength": 123,
+          "attributes": [
+            {
+              "attributeName": "Name",
+              "type": "varchar",
+              "length": 20,
+              "isnull": true
+            },
+            {
+              "attributeName": "ID",
+              "type": "int",
+              "length": 0,
+              "isnull": true
+            },
+            {
+              "attributeName": "Price",
+              "type": "int",
+              "length": 0,
+              "isnull": true
+            }
+          ],
+          "pKAttrName": "ID",
+          "foreignKeys": [],
+          "indexFiles": []
+        }
+      ]
+    }
+  ]
+}

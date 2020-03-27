@@ -19,6 +19,11 @@ public class Main {
     public static void main(String[] args) throws Exception {
         DataBases databases = DataBases.FromJson();
 
+        // hat igy kell felcsatlakozni a MANGO szerverre.
+        // de ezt Hudi csinalta a sajat gepen. Nem tom hogy fog mukodni mas gepen.
+        // mert ez a Hudi clusterje.
+        // User: banditar
+        // pass: igen1234
         String connectionString = "mongodb+srv://banditar:igen1234@cluster0-rhgog.mongodb.net/test?retryWrites=true&w=majority";
         com.mongodb.client.MongoClient mongoClients;
 
