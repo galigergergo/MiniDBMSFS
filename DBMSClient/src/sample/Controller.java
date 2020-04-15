@@ -424,6 +424,7 @@ public class Controller {
             // send to the server
             if(niChoiceBoxT.getValue() != null && !niTextFieldN.getText().equals("")) {
                 // send to the server
+                // ITT KENE A UNIQUE-ot betenni                           \/
                 IndexFile newI = new IndexFile(niTextFieldN.getText(), true, niChoiceBoxA.getValue());
                 try {
                     os.writeUTF("ni");
