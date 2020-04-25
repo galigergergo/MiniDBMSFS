@@ -14,6 +14,7 @@ import javafx.scene.layout.Pane;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -148,6 +149,88 @@ public class Controller {
     private ChoiceBox<Table> insertChoiceBoxT;
     @FXML
     private TableView<ObservableList<String>> insertTableView;
+    @FXML
+    private Pane selFromPane;
+    @FXML
+    private ChoiceBox<Database> selFromChoiceBoxDb;
+    @FXML
+    private ChoiceBox<Table> selFromChoiceBoxT;
+    @FXML
+    private Button selFromAttrButton;
+    @FXML
+    private Button selFromJoinButton;
+    @FXML
+    private Button selFromCancelButton;
+    @FXML
+    private Pane selJoinPane;
+    @FXML
+    private ChoiceBox<Table> selJoinChoiceBoxT;
+    @FXML
+    private ChoiceBox<Attribute> selJoinChoiceBoxA1;
+    @FXML
+    private ChoiceBox<Attribute> selJoinChoiceBoxA2;
+    @FXML
+    private Button selJoinAttrButton;
+    @FXML
+    private Button selJoinJoinButton;
+    @FXML
+    private Button selJoinCancelButton;
+    @FXML
+    private Pane selAttrPane;
+    @FXML
+    private ChoiceBox<String> selAttrChoiceBoxF;
+    @FXML
+    private ChoiceBox<TableAttribute> selAttrChoiceBoxA;
+    @FXML
+    private TableView<ObservableList<String>> selAttrTableView;
+    @FXML
+    private Button selAttrLeftButton;
+    @FXML
+    private Button selAttrRightButton;
+    @FXML
+    private Button selAttrOkButton;
+    @FXML
+    private Button selAttrWhereButton;
+    @FXML
+    private Button selAttrCancelButton;
+    @FXML
+    private Pane selWherePane;
+    @FXML
+    private ChoiceBox<TableAttribute> selWhereChoiceBoxA;
+    @FXML
+    private ChoiceBox<String> selWhereChoiceBoxO;
+    @FXML
+    private TextField selWhereTextFieldV;
+    @FXML
+    private TableView<ObservableList<String>> selWhereTableView;
+    @FXML
+    private Button selWhereLeftButton;
+    @FXML
+    private Button selWhereRightButton;
+    @FXML
+    private Button selWhereOkButton;
+    @FXML
+    private Button selWhereGroupByButton;
+    @FXML
+    private Button selWhereCancelButton;
+    @FXML
+    private Pane selGroupByPane;
+    @FXML
+    private ChoiceBox<TableAttribute> selGroupByChoiceBoxA;
+    @FXML
+    private Button selGroupByOkButton;
+    @FXML
+    private Button selGroupByCancelButton;
+    @FXML
+    private Pane selOutputPane;
+    @FXML
+    private TableView<ObservableList<String>> selOutputTableView;
+    @FXML
+    private Button selOutputCancelButton;
+    @FXML
+    private MenuItem select;
+    @FXML
+    private CheckBox selAttrCheckBox;
 
     // selected rows of table views
     private ObservableList<String> selectedRow = FXCollections.observableArrayList();
@@ -156,6 +239,7 @@ public class Controller {
     private String[] attrTypes = {"int", "char", "varchar", "date"};
     private String[] operatorTypes = {"=", "!=", "<", ">", "<=", ">="};
     private String[] uniqueList = {"unique", "not unique"};
+    private String[] functionList = {"count", "max"};
     public void initialize() throws Exception{
         // establish connection with server
         Socket socket = new Socket("localhost", 54321);
@@ -326,7 +410,7 @@ public class Controller {
                 // when attribute chosen, update data list
                 ntfkChoiceBoxA.getSelectionModel().selectedItemProperty().addListener((observableValue, old, current) -> {
                     if (ntfkChoiceBoxA.getValue() != null) {
-                        if (!selectedRow.get(0).equals(ntChoiceBoxPK.getValue()) && selectedRow.size() > 0 && ntfkChoiceBoxA.getValue() != null) {
+                        if (selectedRow.size() > 0 && !selectedRow.get(0).equals(ntChoiceBoxPK.getValue()) && ntfkChoiceBoxA.getValue() != null) {
                             ObservableList<String> selRow = selectedRow;
                             data.remove(selectedRow);
                             selRow.remove(5);
@@ -425,7 +509,7 @@ public class Controller {
             if(niChoiceBoxT.getValue() != null && !niTextFieldN.getText().equals("")) {
                 // send to the server
                 // ITT KENE A UNIQUE-ot betenni                           \/
-                IndexFile newI = new IndexFile(niTextFieldN.getText(), true, niChoiceBoxA.getValue());
+                IndexFile newI = new IndexFile(niTextFieldN.getText(), false, niChoiceBoxA.getValue());
                 try {
                     os.writeUTF("ni");
                     os.flush();
@@ -712,7 +796,474 @@ public class Controller {
             }
         });
 
-        }
+
+        // select - from
+        ArrayList<WhereCondition> conds = new ArrayList<>();
+        ArrayList<String> functions = new ArrayList<>();
+        ArrayList<TableAttribute> attributes = new ArrayList<>();
+        Selection selection = new Selection();
+        select.setOnAction(e -> {
+            selFromChoiceBoxDb.setValue(null);
+            selFromChoiceBoxT.setValue(null);
+
+            selFromChoiceBoxDb.getItems().clear();
+            // fill database choice box
+            for (Database temp : databases) {
+                selFromChoiceBoxDb.getItems().add(temp);
+            }
+
+            // new selection
+            selection.empty();
+
+            hidePanes();
+            selFromPane.setVisible(true);
+        });
+        selFromChoiceBoxDb.getSelectionModel().selectedItemProperty().addListener((observableValue, old, current) -> {
+            if (selFromChoiceBoxDb.getValue() != null) {
+                selFromChoiceBoxT.setValue(null);
+                selFromChoiceBoxT.getItems().clear();
+                for (Table temp : current.getTables()) {
+                    selFromChoiceBoxT.getItems().add(temp);
+                }
+            }
+        });
+        selFromCancelButton.setOnAction(e -> selFromPane.setVisible(false));
+        selFromJoinButton.setOnAction(e -> {
+            if (selFromChoiceBoxDb.getValue() != null && selFromChoiceBoxT.getValue() != null) {
+                selection.setDatabase(selFromChoiceBoxDb.getValue().getDataBaseName());
+                selection.setTable(selFromChoiceBoxT.getValue());
+
+                selJoinChoiceBoxT.setValue(null);
+                selJoinChoiceBoxT.getItems().clear();
+                selJoinChoiceBoxA1.setValue(null);
+                selJoinChoiceBoxA1.getItems().clear();
+                selJoinChoiceBoxA2.setValue(null);
+                selJoinChoiceBoxA2.getItems().clear();
+
+                for (Table temp : selFromChoiceBoxDb.getValue().getTables()) {
+                    selJoinChoiceBoxT.getItems().add(temp);
+                }
+                for (Attribute temp : selFromChoiceBoxT.getValue().getAttributes()) {
+                    selJoinChoiceBoxA1.getItems().add(temp);
+                }
+
+                selFromPane.setVisible(false);
+                selJoinPane.setVisible(true);
+            }
+        });
+        selFromAttrButton.setOnAction(e -> {
+            if (selFromChoiceBoxDb.getValue() != null && selFromChoiceBoxT.getValue() != null) {
+                selection.setDatabase(selFromChoiceBoxDb.getValue().getDataBaseName());
+                selection.setTable(selFromChoiceBoxT.getValue());
+
+                selAttrChoiceBoxF.setValue(null);
+                selAttrChoiceBoxF.getItems().clear();
+                selAttrChoiceBoxA.setValue(null);
+                selAttrChoiceBoxA.getItems().clear();
+                selAttrCheckBox.setSelected(false);
+
+                for (String temp : functionList) {
+                    selAttrChoiceBoxF.getItems().add(temp);
+                }
+                for (Attribute temp : selection.getTable().getAttributes()) {
+                    selAttrChoiceBoxA.getItems().add(new TableAttribute(selection.getTable().getTableName(), temp.getAttributeName()));
+                }
+                for (Join j : selection.getJoins()) {
+                    for (Attribute temp : j.getTable().getAttributes()) {
+                        selAttrChoiceBoxA.getItems().add(new TableAttribute(j.getTable().getTableName(), temp.getAttributeName()));
+                    }
+                }
+
+                data.clear();
+                selAttrTableView.getColumns().clear();
+
+                // create tableview columns
+                final TableColumn<ObservableList<String>, String> column1 = new TableColumn<>("Attribute");
+                column1.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().get(0)));
+                selAttrTableView.getColumns().add(column1);
+                final TableColumn<ObservableList<String>, String> column2 = new TableColumn<>("Function");
+                column2.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().get(1)));
+                selAttrTableView.getColumns().add(column2);
+
+                functions.clear();
+                attributes.clear();
+
+                selFromPane.setVisible(false);
+                selAttrPane.setVisible(true);
+            }
+        });
+
+        // select - join
+        selJoinChoiceBoxT.getSelectionModel().selectedItemProperty().addListener((observableValue, old, current) -> {
+            if (selJoinChoiceBoxT.getValue() != null) {
+                selJoinChoiceBoxA2.setValue(null);
+                selJoinChoiceBoxA2.getItems().clear();
+                for (Attribute temp : current.getAttributes()) {
+                    selJoinChoiceBoxA2.getItems().add(temp);
+                }
+            }
+        });
+        selJoinCancelButton.setOnAction(e -> selJoinPane.setVisible(false));
+        selJoinJoinButton.setOnAction(e -> {
+            if (selJoinChoiceBoxT.getValue() != null && selJoinChoiceBoxA1.getValue() != null && selJoinChoiceBoxA2.getValue() != null) {
+                selection.addJoin(selJoinChoiceBoxT.getValue(), selJoinChoiceBoxA1.getValue().getAttributeName(), selJoinChoiceBoxA2.getValue().getAttributeName());
+
+                selJoinChoiceBoxT.setValue(null);
+                selJoinChoiceBoxT.getItems().clear();
+                selJoinChoiceBoxA1.setValue(null);
+                selJoinChoiceBoxA1.getItems().clear();
+                selJoinChoiceBoxA2.setValue(null);
+                selJoinChoiceBoxA2.getItems().clear();
+
+                for (Table temp : selFromChoiceBoxDb.getValue().getTables()) {
+                    selJoinChoiceBoxT.getItems().add(temp);
+                }
+                for (Attribute temp : selFromChoiceBoxT.getValue().getAttributes()) {
+                    selJoinChoiceBoxA1.getItems().add(temp);
+                }
+            }
+        });
+        selJoinAttrButton.setOnAction(e -> {
+            if (selJoinChoiceBoxT.getValue() != null && selJoinChoiceBoxA1.getValue() != null && selJoinChoiceBoxA2.getValue() != null) {
+                selection.addJoin(selJoinChoiceBoxT.getValue(), selJoinChoiceBoxA1.getValue().getAttributeName(), selJoinChoiceBoxA2.getValue().getAttributeName());
+
+                selAttrChoiceBoxF.setValue(null);
+                selAttrChoiceBoxF.getItems().clear();
+                selAttrChoiceBoxA.setValue(null);
+                selAttrChoiceBoxA.getItems().clear();
+                selAttrCheckBox.setSelected(false);
+
+                for (String temp : functionList) {
+                    selAttrChoiceBoxF.getItems().add(temp);
+                }
+                for (Attribute temp : selection.getTable().getAttributes()) {
+                    selAttrChoiceBoxA.getItems().add(new TableAttribute(selection.getTable().getTableName(), temp.getAttributeName()));
+                }
+                for (Join j : selection.getJoins()) {
+                    for (Attribute temp : j.getTable().getAttributes()) {
+                        selAttrChoiceBoxA.getItems().add(new TableAttribute(j.getTable().getTableName(), temp.getAttributeName()));
+                    }
+                }
+
+                data.clear();
+                selAttrTableView.getColumns().clear();
+
+                // create tableview columns
+                final TableColumn<ObservableList<String>, String> column1 = new TableColumn<>("Attribute");
+                column1.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().get(0)));
+                selAttrTableView.getColumns().add(column1);
+                final TableColumn<ObservableList<String>, String> column2 = new TableColumn<>("Function");
+                column2.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().get(1)));
+                selAttrTableView.getColumns().add(column2);
+
+                functions.clear();
+                attributes.clear();
+
+                selFromPane.setVisible(false);
+                selAttrPane.setVisible(true);
+            }
+        });
+
+        // select - attributes
+        selAttrRightButton.setOnAction(e -> {
+            // insert into table view
+            if(selAttrChoiceBoxA.getValue() != null) {
+                ObservableList<String> row = FXCollections.observableArrayList();
+                TableAttribute attr = selAttrChoiceBoxA.getValue();
+                row.add(attr.toString());
+                attributes.add(attr);
+                if (selAttrChoiceBoxF.getValue() == null) {
+                    row.add("");
+                    functions.add("");
+                }
+                else {
+                    row.add(selAttrChoiceBoxF.getValue());
+                    functions.add(selAttrChoiceBoxF.getValue());
+                }
+                data.add(row);
+                selAttrTableView.setItems(data);
+                selAttrChoiceBoxF.setValue(null);
+                selAttrChoiceBoxA.setValue(null);
+
+                int i = 0;
+                for(TableAttribute attrib : selAttrChoiceBoxA.getItems()) {
+                    if(attrib.toString().equals(attr.toString())) {
+                        break;
+                    }
+                    i++;
+                }
+                selAttrChoiceBoxA.getItems().remove(i);
+            }
+        });
+        // update selected row of table view
+        selAttrTableView.getSelectionModel().selectedItemProperty().addListener((ChangeListener<? super ObservableList<String>>) (observableValue, oldValue, newValue) -> {
+            //Check whether item is selected and set value of selected item to Label
+            if (selAttrTableView.getSelectionModel().getSelectedItem() != null) {
+                setSelectedRow(selAttrTableView.getSelectionModel().getSelectedItem());
+            }
+        });
+        selAttrLeftButton.setOnAction(e -> {
+            if (selectedRow != null) {
+                String at = selectedRow.get(0);
+                data.remove(selectedRow);
+
+                int i = 0;
+                for(TableAttribute attr : attributes) {
+                    if (at.equals(attr.toString())) {
+                        break;
+                    }
+                    i++;
+                }
+                attributes.remove(i);
+                functions.remove(i);
+
+                for(Attribute attrib : selection.getTable().getAttributes()) {
+                    String name = selection.getTable().getTableName() + " - " + attrib.getAttributeName();
+                    if(name.equals(at)) {
+                        selAttrChoiceBoxA.getItems().add(new TableAttribute(selection.getTable().getTableName(), attrib.getAttributeName()));
+                    }
+                }
+                for (Join j : selection.getJoins()) {
+                    for (Attribute attrib : j.getTable().getAttributes()) {
+                        String name = j.getTable().getTableName() + " - " + attrib.getAttributeName();
+                        if(name.equals(at)) {
+                            selAttrChoiceBoxA.getItems().add(new TableAttribute(j.getTable().getTableName(), attrib.getAttributeName()));
+                        }
+                    }
+                }
+            }
+        });
+        selAttrCancelButton.setOnAction(e -> selAttrPane.setVisible(false));
+        selAttrOkButton.setOnAction(e -> {
+            if (selAttrCheckBox.isSelected()) {
+                for(Attribute attr : selection.getTable().getAttributes()) {
+                    selection.addAttribute(new TableAttribute(selection.getTable().getTableName(), attr.getAttributeName()));
+                    selection.addFunction("");
+                }
+
+                // send to the server
+                try {
+                    os.writeUTF("select");
+                    os.flush();
+                    os.writeObject(selection);
+                    os.flush();
+                } catch (Exception ex) {
+                    System.out.println("Error! Transmit message: select");
+                }
+
+                selAttrPane.setVisible(false);
+            }
+            else if (attributes.size() > 0) {
+                for(String func : functions) {
+                    selection.addFunction(func);
+                }
+                for(TableAttribute attr : attributes) {
+                    selection.addAttribute(attr);
+                }
+
+                // send to the server
+                try {
+                    os.writeUTF("select");
+                    os.flush();
+                    os.writeObject(selection);
+                    os.flush();
+                } catch (Exception ex) {
+                    System.out.println("Error! Transmit message: select");
+                }
+
+                selAttrPane.setVisible(false);
+            }
+        });
+        selAttrWhereButton.setOnAction(e -> {
+            if (selAttrCheckBox.isSelected()) {
+                for (Attribute attr : selection.getTable().getAttributes()) {
+                    selection.addAttribute(new TableAttribute(selection.getTable().getTableName(), attr.getAttributeName()));
+                    selection.addFunction("");
+                }
+
+                selWhereChoiceBoxA.setValue(null);
+                selWhereChoiceBoxA.getItems().clear();
+                selWhereChoiceBoxO.setValue(null);
+                selWhereChoiceBoxO.getItems().clear();
+                selWhereTextFieldV.setText("");
+
+                for (Attribute temp : selection.getTable().getAttributes()) {
+                    selWhereChoiceBoxA.getItems().add(new TableAttribute(selection.getTable().getTableName(), temp.getAttributeName()));
+                }
+                for (Join j : selection.getJoins()) {
+                    for (Attribute temp : j.getTable().getAttributes()) {
+                        selWhereChoiceBoxA.getItems().add(new TableAttribute(j.getTable().getTableName(), temp.getAttributeName()));
+                    }
+                }
+                for (String temp : operatorTypes) {
+                    selWhereChoiceBoxO.getItems().add(temp);
+                }
+
+                data.clear();
+                selWhereTableView.getColumns().clear();
+
+                // create tableview columns
+                final TableColumn<ObservableList<String>, String> column1 = new TableColumn<>("Attribute");
+                column1.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().get(0)));
+                selWhereTableView.getColumns().add(column1);
+                final TableColumn<ObservableList<String>, String> column2 = new TableColumn<>("Operator");
+                column2.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().get(1)));
+                selWhereTableView.getColumns().add(column2);
+                final TableColumn<ObservableList<String>, String> column3 = new TableColumn<>("Value");
+                column3.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().get(2)));
+                selWhereTableView.getColumns().add(column3);
+
+                selAttrPane.setVisible(false);
+                selWherePane.setVisible(true);
+            }
+            else if (attributes.size() > 0) {
+                for(String func : functions) {
+                    selection.addFunction(func);
+                }
+                for(TableAttribute attr : attributes) {
+                    selection.addAttribute(attr);
+                }
+
+                selWhereChoiceBoxA.setValue(null);
+                selWhereChoiceBoxA.getItems().clear();
+                selWhereChoiceBoxO.setValue(null);
+                selWhereChoiceBoxO.getItems().clear();
+                selWhereTextFieldV.setText("");
+
+                for (Attribute temp : selection.getTable().getAttributes()) {
+                    selWhereChoiceBoxA.getItems().add(new TableAttribute(selection.getTable().getTableName(), temp.getAttributeName()));
+                }
+                for (Join j : selection.getJoins()) {
+                    for (Attribute temp : j.getTable().getAttributes()) {
+                        selWhereChoiceBoxA.getItems().add(new TableAttribute(j.getTable().getTableName(), temp.getAttributeName()));
+                    }
+                }
+                for (String temp : operatorTypes) {
+                    selWhereChoiceBoxO.getItems().add(temp);
+                }
+
+                data.clear();
+                selWhereTableView.getColumns().clear();
+
+                // create tableview columns
+                final TableColumn<ObservableList<String>, String> column1 = new TableColumn<>("Attribute");
+                column1.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().get(0)));
+                selWhereTableView.getColumns().add(column1);
+                final TableColumn<ObservableList<String>, String> column2 = new TableColumn<>("Operator");
+                column2.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().get(1)));
+                selWhereTableView.getColumns().add(column2);
+                final TableColumn<ObservableList<String>, String> column3 = new TableColumn<>("Value");
+                column3.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().get(2)));
+                selWhereTableView.getColumns().add(column3);
+
+                selAttrPane.setVisible(false);
+                selWherePane.setVisible(true);
+            }
+        });
+
+        // select - where
+        selWhereRightButton.setOnAction(e -> {
+            // insert into table view
+            if(selWhereChoiceBoxA.getValue() != null && selWhereChoiceBoxO.getValue() != null && !selWhereTextFieldV.getText().equals("")) {
+                ObservableList<String> row = FXCollections.observableArrayList();
+                row.add(selWhereChoiceBoxA.getValue().toString());
+                row.add(selWhereChoiceBoxO.getValue());
+                row.add(selWhereTextFieldV.getText());
+                conds.add(new WhereCondition(selWhereChoiceBoxA.getValue(), selWhereChoiceBoxO.getValue(), selWhereTextFieldV.getText()));
+                data.add(row);
+                selWhereTableView.setItems(data);
+
+                selWhereChoiceBoxA.setValue(null);
+                selWhereChoiceBoxO.setValue(null);
+                selWhereTextFieldV.setText("");
+            }
+        });
+        // update selected row of table view
+        selWhereTableView.getSelectionModel().selectedItemProperty().addListener((ChangeListener<? super ObservableList<String>>) (observableValue, oldValue, newValue) -> {
+            //Check whether item is selected and set value of selected item to Label
+            if (selWhereTableView.getSelectionModel().getSelectedItem() != null) {
+                setSelectedRow(selWhereTableView.getSelectionModel().getSelectedItem());
+            }
+        });
+        selWhereLeftButton.setOnAction(e -> {
+            if (selectedRow != null) {
+                String at = selectedRow.get(0);
+                data.remove(selectedRow);
+
+                int i = 0;
+                for(WhereCondition c : conds) {
+                    if (at.equals(c.getAttribute().toString())) {
+                        break;
+                    }
+                    i++;
+                }
+                conds.remove(i);
+            }
+        });
+        selWhereCancelButton.setOnAction(e -> selWherePane.setVisible(false));
+        selWhereOkButton.setOnAction(e -> {
+            if (conds.size() > 0) {
+                for(WhereCondition c : conds) {
+                    selection.addCondition(c);
+                }
+
+                // send to the server
+                try {
+                    os.writeUTF("select");
+                    os.flush();
+                    os.writeObject(selection);
+                    os.flush();
+                } catch (Exception ex) {
+                    System.out.println("Error! Transmit message: select");
+                }
+
+                selWherePane.setVisible(false);
+            }
+        });
+        selWhereGroupByButton.setOnAction(e -> {
+            if (conds.size() > 0) {
+                for(WhereCondition c : conds) {
+                    selection.addCondition(c);
+                }
+
+                selGroupByChoiceBoxA.setValue(null);
+                selGroupByChoiceBoxA.getItems().clear();
+
+                for (Attribute temp : selection.getTable().getAttributes()) {
+                    selGroupByChoiceBoxA.getItems().add(new TableAttribute(selection.getTable().getTableName(), temp.getAttributeName()));
+                }
+                for (Join j : selection.getJoins()) {
+                    for (Attribute temp : j.getTable().getAttributes()) {
+                        selGroupByChoiceBoxA.getItems().add(new TableAttribute(j.getTable().getTableName(), temp.getAttributeName()));
+                    }
+                }
+
+                selWherePane.setVisible(false);
+                selGroupByPane.setVisible(true);
+            }
+        });
+
+        // select - group by
+        selGroupByCancelButton.setOnAction(e -> selGroupByPane.setVisible(false));
+        selGroupByOkButton.setOnAction(e -> {
+            if (selGroupByChoiceBoxA.getValue() != null) {
+                selection.setGroupByAttribute(selGroupByChoiceBoxA.getValue());
+
+                // send to the server
+                try {
+                    os.writeUTF("select");
+                    os.flush();
+                    os.writeObject(selection);
+                    os.flush();
+                } catch (Exception ex) {
+                    System.out.println("Error! Transmit message: select");
+                }
+
+                selGroupByPane.setVisible(false);
+            }
+        });
+
+    }
 
 
     public void initTreeView() {
@@ -773,6 +1324,12 @@ public class Controller {
         niPane.setVisible(false);
         deletePane.setVisible(false);
         insertPane.setVisible(false);
+        selFromPane.setVisible(false);
+        selJoinPane.setVisible(false);
+        selAttrPane.setVisible(false);
+        selWherePane.setVisible(false);
+        selGroupByPane.setVisible(false);
+        selOutputPane.setVisible(false);
     }
 
     public void setSelectedRow(ObservableList<String> list) {
@@ -782,5 +1339,4 @@ public class Controller {
     public void setDatabases(List<Database> list) {
         this.databases = list;
     }
-
 }

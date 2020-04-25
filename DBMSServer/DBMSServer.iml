@@ -16,5 +16,9 @@
     <orderEntry type="library" name="mongodb-driver-core-3.9.1" level="project" />
     <orderEntry type="library" name="bson-3.9.1" level="project" />
     <orderEntry type="library" name="gson-2.8.6" level="project" />
+    <orderEntry type="library" name="gson-2.8.6" level="project" />
+    <orderEntry type="library" name="mongodb-driver-3.9.1" level="project" />
+    <orderEntry type="library" name="mongodb-driver-core-3.9.1" level="project" />
+    <orderEntry type="library" name="bson-3.9.1" level="project" />
   </component>
 </module>
