@@ -1,20 +1,17 @@
 package sample;
 
-import com.mongodb.client.*;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.IndexOptions;
-import com.mongodb.client.model.Indexes;
 import data.*;
-import javafx.scene.control.Tab;
 import org.bson.Document;
 
-import javax.print.Doc;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashSet;
-import java.util.Set;
 
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -26,6 +23,7 @@ public class Main {
         // User: banditar
         // pass: igen1234
         String connectionString = "mongodb+srv://banditar:igen1234@cluster0-rhgog.mongodb.net/test?retryWrites=true&w=majority";
+        connectionString = "mongodb://banditar:igen1234@cluster0-shard-00-00-rhgog.mongodb.net:27017,cluster0-shard-00-01-rhgog.mongodb.net:27017,cluster0-shard-00-02-rhgog.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true&w=majority";
         com.mongodb.client.MongoClient mongoClients;
 
         try {
@@ -111,7 +109,6 @@ public class Main {
 
         MongoDatabase mongoDatabase;
         MongoCollection<Document> mongoCollection;
-        IndexOptions indexOptions;
 
         while(!str.equals("stop")) {
             if(is.available() > 0) {
@@ -146,23 +143,17 @@ public class Main {
                         mongoDatabase.createCollection(newT.getTableName());
 
                         // create index in MANGO for unique and foreign key attributes
-                        mongoCollection = mongoDatabase.getCollection(newT.getTableName());
-                        indexOptions = new IndexOptions().unique(true);
                         IndexFile index = new IndexFile(newT.getpKAttrName() + "Index", false, newT.getpKAttrName());
                         newT.addIndexFile(index);
                         for (Attribute attr : newT.getAttributes()) {
                             if (!attr.getAttributeName().equals(newT.getpKAttrName())) {
                                 if (attr.getIsUnique()) {
-                                    indexOptions.unique(true);
-                                    mongoCollection.createIndex(Indexes.ascending(attr.getAttributeName()), indexOptions);
-                                    index = new IndexFile(attr.getAttributeName() + "Index", true, attr.getAttributeName());
+                                    index = new IndexFile(newT.getTableName() + "_" + attr.getAttributeName() + "_" + "Index", true, attr.getAttributeName());
                                     newT.addIndexFile(index);
                                 } else {
                                     for (ForeignKey fk : newT.getForeignKeys()) {
                                         if (fk.getAttrName().equals(attr.getAttributeName())) {
-                                            indexOptions.unique(false);
-                                            mongoCollection.createIndex(Indexes.ascending(attr.getAttributeName()), indexOptions);
-                                            index = new IndexFile(attr.getAttributeName() + "Index", false, attr.getAttributeName());
+                                            index = new IndexFile(newT.getTableName() + "_" + attr.getAttributeName() + "_" + "Index", false, attr.getAttributeName());
                                             newT.addIndexFile(index);
                                         }
                                     }
@@ -194,24 +185,41 @@ public class Main {
                         // and in our JSON Catalog
                         for (Database temp : databases.Databases) {
                             if (temp.getDataBaseName().equals(dbName)) {
-                                mongoDatabase = mongoClients.getDatabase(dbName);
                                 for (Table tempT : temp.getTables()) {
                                     if (tempT.getTableName().equals(tName)) {
+                                        // into Catalog
+                                        tempT.addIndexFile(newI);
+
+                                        // insert all values into Mango
+                                        mongoDatabase = mongoClients.getDatabase(dbName);
                                         mongoCollection = mongoDatabase.getCollection(tName);
-                                        indexOptions = new IndexOptions();
-                                        indexOptions.name(newI.getIndexName());     // its name
-                                        indexOptions.unique(newI.isUnique());       // unique
+                                        MongoCollection<Document> mongoCollectionIndex = mongoDatabase.getCollection(newI.getIndexName());
 
-                                        // into MANGO
-                                        // in a try catch, because if it already exists: throws Exception
-                                        try {
-                                            mongoCollection.createIndex(Indexes.ascending(newI.getAttribute()), indexOptions);
-
-                                            // into Catalog
-                                            tempT.addIndexFile(newI);
-                                        } catch (Exception e) {
-                                            System.out.println("Exception at creating Index: " + e);
+                                        FindIterable<Document> doc = mongoCollection.find();
+                                        for (Document next : doc) {
+                                            boolean found = false;
+                                            if (!newI.isUnique()) {
+                                                // check if already contains
+                                                FindIterable<Document> indexFile = mongoCollectionIndex.find(Filters.eq("_id", next.get(newI.getAttribute())));
+                                                for (Document next2 : indexFile) {
+                                                    mongoCollectionIndex.deleteOne(next2);
+                                                    next2.replace("main_id", next2.get("main_id") + "#" + next.get("_id"));
+                                                    mongoCollectionIndex.insertOne(next2);
+                                                    found = true;
+                                                    break;
+                                                }
+                                                if (!found) {
+                                                    Document entry = new Document("_id", next.get(newI.getAttribute()));
+                                                    entry.append("main_id", next.get("_id"));
+                                                    mongoCollectionIndex.insertOne(entry);
+                                                }
+                                            } else {
+                                                Document entry = new Document("_id", next.get(newI.getAttribute()));
+                                                entry.append("main_id", next.get("_id"));
+                                                mongoCollectionIndex.insertOne(entry);
+                                            }
                                         }
+
 
                                         break;
                                     }
@@ -284,8 +292,8 @@ public class Main {
                         // connecting to Collection from MANGO
                         mongoCollection = mongoDatabase.getCollection(tName);
 
-                        String[] att = attrs.split("#");
-                        String[] val = value.split("#");
+                        String[] att = attrs.split("#", -1);
+                        String[] val = value.split("#", -1);
 
                         // creating the Document to insert
                         // key: value pairs
@@ -293,21 +301,28 @@ public class Main {
                         //           attr: value...
                         Document document = new Document("_id", key);
                         for (int i = 0; i < att.length; i++) {
-                            document.append(att[i], val[i]);
+                            if (!val[i].equals("")) {
+                                document.append(att[i], val[i]);
+                            }
                         }
 
                         // check if our table is a child
                         // if so, check if the attr to which we are referring exists
+                        Table currentTable = null;
                         boolean insertable = true;
                         for (Database db : databases.Databases) {
                             if (db.getDataBaseName().equals(dbName)) {
                                 for (Table t : db.getTables()) {
                                     if (t.getTableName().equals(tName)) {
+                                        currentTable = t;
                                         for (ForeignKey fk : t.getForeignKeys()) {
                                             String refT = fk.getRefTableName();
                                             String refAttr = fk.getRefAttrName();
                                             String attr = fk.getAttrName();
                                             String ourVal = (String) document.get(attr);
+                                            if (ourVal == null) {
+                                                break;
+                                            }
 
                                             // check if refAttr is pk
                                             for (Table refTab : db.getTables()) {
@@ -322,8 +337,7 @@ public class Main {
                                             Document found = mongoCollectionFK.find(Filters.eq(refAttr, ourVal)).first();
                                             if (found == null) {
                                                 // doesn't exist. Cant insert
-
-                                                result = "Can't insert into child table; Parent hasn't got your value.";
+                                                result = "Can't insert into parent table; Child hasn't got your value.";
                                                 os.writeObject(result);
                                                 os.flush();
                                                 insertable = false;
@@ -347,10 +361,44 @@ public class Main {
                         try {
                             // inserting to MANGO Collection
                             mongoCollection.insertOne(document);
+
+                            // inserting into MANGO Index Collection
+                            for (int i = 0; i < att.length; i++) {
+                                if (!val[i].equals("")) {
+                                    for (IndexFile ind : currentTable.getIndexFiles()) {
+                                        if (ind.getAttribute().equals(att[i])) {
+                                            MongoCollection<Document> mongoCollectionIndex = mongoDatabase.getCollection(ind.getIndexName());
+
+                                            boolean found = false;
+                                            if (!ind.isUnique()) {
+                                                // check if already contains
+                                                FindIterable<Document> indexFile = mongoCollectionIndex.find(Filters.eq("_id", val[i]));
+                                                for (Document next2 : indexFile) {
+                                                    mongoCollectionIndex.deleteOne(next2);
+                                                    next2.replace("main_id", next2.get("main_id") + "#" + document.get("_id"));
+                                                    mongoCollectionIndex.insertOne(next2);
+                                                    found = true;
+                                                    break;
+                                                }
+                                                if (!found) {
+                                                    Document entry = new Document("_id", val[i]);
+                                                    entry.append("main_id", document.get("_id"));
+                                                    mongoCollectionIndex.insertOne(entry);
+                                                }
+                                            } else {
+                                                Document entry = new Document("_id", val[i]);
+                                                entry.append("main_id", document.get("_id"));
+                                                mongoCollectionIndex.insertOne(entry);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
                             result = "Inserted correctly";
                         } catch (Exception e){
                             // if insert failed. e.g. duplicate key
-                            result = "Insert failed";
+                            result = "Insert failed\n" + e;
                         }
 
                         // hiba/sikeruzenet visszaterites

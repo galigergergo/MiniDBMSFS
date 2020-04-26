@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Menu?>
@@ -47,6 +48,11 @@
                    <MenuItem fx:id="delete" mnemonicParsing="false" text="Delete" />
                   </items>
                 </Menu>
+                  <Menu mnemonicParsing="false" text="Query">
+                     <items>
+                        <MenuItem fx:id="select" mnemonicParsing="false" text="Select" />
+                     </items>
+                  </Menu>
               </menus>
             </MenuBar>
             <Pane fx:id="ndbPane" layoutX="240.0" layoutY="40.0" prefHeight="200.0" prefWidth="380.0" style="-fx-background-color: #333333;" visible="false">
@@ -313,6 +319,153 @@
                   </Label>
                   <ChoiceBox fx:id="deleteChoiceBoxO" layoutX="148.0" layoutY="211.0" prefHeight="25.0" prefWidth="200.0" />
                   <ChoiceBox fx:id="deleteChoiceBoxT" layoutX="148.0" layoutY="136.0" prefHeight="25.0" prefWidth="200.0" />
+               </children>
+            </Pane>
+            <Pane fx:id="selFromPane" layoutX="240.0" layoutY="38.0" prefHeight="231.0" prefWidth="380.0" style="-fx-background-color: #333333;" visible="false">
+               <children>
+                  <Label layoutX="22.0" layoutY="100.0" text="Database name:" textFill="WHITE">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </Label>
+                  <Label layoutX="22.0" layoutY="14.0" text="Select - From" textFill="WHITE">
+                     <font>
+                        <Font size="34.0" />
+                     </font>
+                  </Label>
+                  <Button fx:id="selFromAttrButton" layoutX="167.0" layoutY="189.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="Attributes" textFill="WHITE" />
+                  <Button fx:id="selFromCancelButton" layoutX="296.0" layoutY="189.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="Cancel" textFill="WHITE" />
+                  <ChoiceBox fx:id="selFromChoiceBoxDb" layoutX="148.0" layoutY="98.0" prefHeight="25.0" prefWidth="200.0" />
+                  <Label layoutX="22.0" layoutY="138.0" text="Table name:" textFill="WHITE">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </Label>
+                  <ChoiceBox fx:id="selFromChoiceBoxT" layoutX="148.0" layoutY="136.0" prefHeight="25.0" prefWidth="200.0" />
+                  <Button fx:id="selFromJoinButton" layoutX="248.0" layoutY="189.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="Join" textFill="WHITE" />
+               </children>
+            </Pane>
+            <Pane fx:id="selJoinPane" layoutX="240.0" layoutY="40.0" prefHeight="274.0" prefWidth="380.0" style="-fx-background-color: #333333;" visible="false">
+               <children>
+                  <Label layoutX="22.0" layoutY="100.0" text="Table name:" textFill="WHITE">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </Label>
+                  <Label layoutX="22.0" layoutY="14.0" text="Select - Join" textFill="WHITE">
+                     <font>
+                        <Font size="34.0" />
+                     </font>
+                  </Label>
+                  <Button fx:id="selJoinAttrButton" layoutX="167.0" layoutY="229.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="Attributes" textFill="WHITE" />
+                  <Button fx:id="selJoinCancelButton" layoutX="296.0" layoutY="229.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="Cancel" textFill="WHITE" />
+                  <ChoiceBox fx:id="selJoinChoiceBoxT" layoutX="148.0" layoutY="98.0" prefHeight="25.0" prefWidth="200.0" />
+                  <Label layoutX="22.0" layoutY="138.0" text="Attribute 1:" textFill="WHITE">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </Label>
+                  <ChoiceBox fx:id="selJoinChoiceBoxA1" layoutX="148.0" layoutY="136.0" prefHeight="25.0" prefWidth="200.0" />
+                  <Button fx:id="selJoinJoinButton" layoutX="248.0" layoutY="229.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="Join" textFill="WHITE" />
+                  <Label layoutX="22.0" layoutY="175.0" text="Attribute 2:" textFill="WHITE">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </Label>
+                  <ChoiceBox fx:id="selJoinChoiceBoxA2" layoutX="148.0" layoutY="173.0" prefHeight="25.0" prefWidth="200.0" />
+               </children>
+            </Pane>
+            <Pane fx:id="selAttrPane" layoutX="240.0" layoutY="38.0" prefHeight="349.0" prefWidth="380.0" style="-fx-background-color: #333333;" visible="false">
+               <children>
+                  <Label layoutX="22.0" layoutY="14.0" text="Select - Attributes" textFill="WHITE">
+                     <font>
+                        <Font size="34.0" />
+                     </font>
+                  </Label>
+                  <Button fx:id="selAttrOkButton" layoutX="190.0" layoutY="304.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="OK" textFill="WHITE" />
+                  <Button fx:id="selAttrCancelButton" layoutX="294.0" layoutY="304.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="Cancel" textFill="WHITE" />
+                  <TableView fx:id="selAttrTableView" layoutX="186.0" layoutY="89.0" prefHeight="184.0" prefWidth="160.0" />
+                  <Label layoutX="25.0" layoutY="180.0" text="Attribute:" textFill="WHITE">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </Label>
+                  <Button fx:id="selAttrLeftButton" layoutX="101.0" layoutY="248.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="&lt;" textFill="WHITE" />
+                  <Button fx:id="selAttrRightButton" layoutX="133.0" layoutY="248.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="&gt;" textFill="WHITE" />
+                  <Button fx:id="selAttrWhereButton" layoutX="234.0" layoutY="304.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="Where" textFill="WHITE" />
+                  <ChoiceBox fx:id="selAttrChoiceBoxA" layoutX="22.0" layoutY="205.0" prefHeight="25.0" prefWidth="140.0" />
+                  <Label layoutX="25.0" layoutY="119.0" text="Function:" textFill="WHITE">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </Label>
+                  <ChoiceBox fx:id="selAttrChoiceBoxF" layoutX="22.0" layoutY="144.0" prefHeight="25.0" prefWidth="140.0" />
+                  <CheckBox fx:id="selAttrCheckBox" layoutX="22.0" layoutY="89.0" mnemonicParsing="false" prefHeight="17.0" prefWidth="140.0" text="All Attributes" textFill="WHITE">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </CheckBox>
+               </children>
+            </Pane>
+            <Pane fx:id="selWherePane" layoutX="240.0" layoutY="40.0" prefHeight="335.0" prefWidth="380.0" style="-fx-background-color: #333333;" visible="false">
+               <children>
+                  <Label layoutX="22.0" layoutY="14.0" text="Select - Where" textFill="WHITE">
+                     <font>
+                        <Font size="34.0" />
+                     </font>
+                  </Label>
+                  <Button fx:id="selWhereOkButton" layoutX="174.0" layoutY="292.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="OK" textFill="WHITE" />
+                  <Button fx:id="selWhereCancelButton" layoutX="293.0" layoutY="292.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="Cancel" textFill="WHITE" />
+                  <TableView fx:id="selWhereTableView" layoutX="185.0" layoutY="83.0" prefHeight="184.0" prefWidth="160.0" />
+                  <Label layoutX="22.0" layoutY="89.0" text="Attribute:" textFill="WHITE">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </Label>
+                  <Label layoutX="21.0" layoutY="146.0" text="Operator:" textFill="WHITE">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </Label>
+                  <ChoiceBox fx:id="selWhereChoiceBoxO" layoutX="14.0" layoutY="167.0" prefHeight="25.0" prefWidth="140.0" />
+                  <Label layoutX="23.0" layoutY="199.0" text="Value:" textFill="WHITE">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </Label>
+                  <TextField fx:id="selWhereTextFieldV" layoutX="14.0" layoutY="220.0" prefHeight="25.0" prefWidth="140.0" />
+                  <Button fx:id="selWhereLeftButton" layoutX="108.0" layoutY="292.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="&lt;" textFill="WHITE" />
+                  <Button fx:id="selWhereRightButton" layoutX="140.0" layoutY="292.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="&gt;" textFill="WHITE" />
+                  <ChoiceBox fx:id="selWhereChoiceBoxA" layoutX="14.0" layoutY="110.0" prefHeight="25.0" prefWidth="140.0" />
+                  <Button fx:id="selWhereGroupByButton" layoutX="216.0" layoutY="292.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="Group by" textFill="WHITE" />
+               </children>
+            </Pane>
+            <Pane fx:id="selGroupByPane" layoutX="240.0" layoutY="45.0" prefHeight="178.0" prefWidth="380.0" style="-fx-background-color: #333333;" visible="false">
+               <children>
+                  <Label layoutX="22.0" layoutY="14.0" text="Select - Group By" textFill="WHITE">
+                     <font>
+                        <Font size="34.0" />
+                     </font>
+                  </Label>
+                  <Button fx:id="selGroupByOkButton" layoutX="249.0" layoutY="136.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="OK" textFill="WHITE" />
+                  <Button fx:id="selGroupByCancelButton" layoutX="292.0" layoutY="136.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="Cancel" textFill="WHITE" />
+                  <Label layoutX="22.0" layoutY="89.0" text="Attribute name:" textFill="WHITE">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </Label>
+                  <ChoiceBox fx:id="selGroupByChoiceBoxA" layoutX="144.0" layoutY="87.0" prefHeight="25.0" prefWidth="200.0" />
+               </children>
+            </Pane>
+            <Pane fx:id="selOutputPane" layoutX="240.0" layoutY="45.0" prefHeight="418.0" prefWidth="380.0" style="-fx-background-color: #333333;" visible="false">
+               <children>
+                  <TableView fx:id="selOutputTableView" layoutX="22.0" layoutY="90.0" prefHeight="274.0" prefWidth="330.0" />
+                  <Label layoutX="22.0" layoutY="14.0" text="Select - Output" textFill="WHITE">
+                     <font>
+                        <Font size="34.0" />
+                     </font>
+                  </Label>
+                  <Button fx:id="selOutputCancelButton" layoutX="299.0" layoutY="379.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="Cancel" textFill="WHITE" />
                </children>
             </Pane>
          </children>
