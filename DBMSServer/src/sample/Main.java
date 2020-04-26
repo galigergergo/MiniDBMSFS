@@ -203,7 +203,7 @@ public class Main {
                                                 FindIterable<Document> indexFile = mongoCollectionIndex.find(Filters.eq("_id", next.get(newI.getAttribute())));
                                                 for (Document next2 : indexFile) {
                                                     mongoCollectionIndex.deleteOne(next2);
-                                                    next2.replace("main_id", next2.get("main_id") + "#" + next.get(newI.getAttribute()));
+                                                    next2.replace("main_id", next2.get("main_id") + "#" + next.get("_id"));
                                                     mongoCollectionIndex.insertOne(next2);
                                                     found = true;
                                                     break;
@@ -308,16 +308,21 @@ public class Main {
 
                         // check if our table is a child
                         // if so, check if the attr to which we are referring exists
+                        Table currentTable = null;
                         boolean insertable = true;
                         for (Database db : databases.Databases) {
                             if (db.getDataBaseName().equals(dbName)) {
                                 for (Table t : db.getTables()) {
                                     if (t.getTableName().equals(tName)) {
+                                        currentTable = t;
                                         for (ForeignKey fk : t.getForeignKeys()) {
                                             String refT = fk.getRefTableName();
                                             String refAttr = fk.getRefAttrName();
                                             String attr = fk.getAttrName();
                                             String ourVal = (String) document.get(attr);
+                                            if (ourVal == null) {
+                                                break;
+                                            }
 
                                             // check if refAttr is pk
                                             for (Table refTab : db.getTables()) {
@@ -332,8 +337,7 @@ public class Main {
                                             Document found = mongoCollectionFK.find(Filters.eq(refAttr, ourVal)).first();
                                             if (found == null) {
                                                 // doesn't exist. Cant insert
-
-                                                result = "Can't insert into child table; Parent hasn't got your value.";
+                                                result = "Can't insert into parent table; Child hasn't got your value.";
                                                 os.writeObject(result);
                                                 os.flush();
                                                 insertable = false;
@@ -357,6 +361,40 @@ public class Main {
                         try {
                             // inserting to MANGO Collection
                             mongoCollection.insertOne(document);
+
+                            // inserting into MANGO Index Collection
+                            for (int i = 0; i < att.length; i++) {
+                                if (!val[i].equals("")) {
+                                    for (IndexFile ind : currentTable.getIndexFiles()) {
+                                        if (ind.getAttribute().equals(att[i])) {
+                                            MongoCollection<Document> mongoCollectionIndex = mongoDatabase.getCollection(ind.getIndexName());
+
+                                            boolean found = false;
+                                            if (!ind.isUnique()) {
+                                                // check if already contains
+                                                FindIterable<Document> indexFile = mongoCollectionIndex.find(Filters.eq("_id", val[i]));
+                                                for (Document next2 : indexFile) {
+                                                    mongoCollectionIndex.deleteOne(next2);
+                                                    next2.replace("main_id", next2.get("main_id") + "#" + document.get("_id"));
+                                                    mongoCollectionIndex.insertOne(next2);
+                                                    found = true;
+                                                    break;
+                                                }
+                                                if (!found) {
+                                                    Document entry = new Document("_id", val[i]);
+                                                    entry.append("main_id", document.get("_id"));
+                                                    mongoCollectionIndex.insertOne(entry);
+                                                }
+                                            } else {
+                                                Document entry = new Document("_id", val[i]);
+                                                entry.append("main_id", document.get("_id"));
+                                                mongoCollectionIndex.insertOne(entry);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
                             result = "Inserted correctly";
                         } catch (Exception e){
                             // if insert failed. e.g. duplicate key

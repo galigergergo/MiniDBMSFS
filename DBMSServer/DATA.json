@@ -261,6 +261,61 @@
               "indexName": "aaaaaaaaa",
               "isUnique": false,
               "attribute": "Age"
+            },
+            {
+              "indexName": "lskjdfélskdjfélskdj",
+              "isUnique": false,
+              "attribute": "Age"
+            }
+          ]
+        },
+        {
+          "tableName": "IndexTest",
+          "fileName": "afilename",
+          "rowLength": 123,
+          "attributes": [
+            {
+              "attributeName": "ID",
+              "type": "int",
+              "length": 0,
+              "isUnique": true
+            },
+            {
+              "attributeName": "Unique",
+              "type": "int",
+              "length": 0,
+              "isUnique": true
+            },
+            {
+              "attributeName": "Foreign",
+              "type": "int",
+              "length": 0,
+              "isUnique": false
+            }
+          ],
+          "pKAttrName": "ID",
+          "foreignKeys": [
+            {
+              "attrName": "Foreign",
+              "refTableName": "Person",
+              "refAttrName": "ID"
+            }
+          ],
+          "indexFiles": [
+            {
+              "indexName": "IDIndex",
+              "isUnique": false,
+              "attribute": "ID"
+            },
+            {
+              "indexName": "IndexTest_Unique_Index",
+              "isUnique": true,
+              "attribute": "Unique"
+            },
+            {
+              "indexName": "IndexTest_Foreign_Index",
+              "isUnique": false,
+              "attribute": "Foreign"
             }
           ]
         }

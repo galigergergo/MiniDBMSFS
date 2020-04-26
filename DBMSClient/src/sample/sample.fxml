@@ -375,7 +375,7 @@
                   <ChoiceBox fx:id="selJoinChoiceBoxA2" layoutX="148.0" layoutY="173.0" prefHeight="25.0" prefWidth="200.0" />
                </children>
             </Pane>
-            <Pane fx:id="selAttrPane" layoutX="240.0" layoutY="38.0" prefHeight="349.0" prefWidth="380.0" style="-fx-background-color: #333333;">
+            <Pane fx:id="selAttrPane" layoutX="240.0" layoutY="38.0" prefHeight="349.0" prefWidth="380.0" style="-fx-background-color: #333333;" visible="false">
                <children>
                   <Label layoutX="22.0" layoutY="14.0" text="Select - Attributes" textFill="WHITE">
                      <font>
