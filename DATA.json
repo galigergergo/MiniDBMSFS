@@ -130,6 +130,45 @@
               "attribute": "AblakPucID"
             }
           ]
+        },
+        {
+          "tableName": "UnokaAblak",
+          "fileName": "afilename",
+          "rowLength": 123,
+          "attributes": [
+            {
+              "attributeName": "ID",
+              "type": "int",
+              "length": 0,
+              "isUnique": true
+            },
+            {
+              "attributeName": "APucoloID",
+              "type": "int",
+              "length": 0,
+              "isUnique": false
+            }
+          ],
+          "pKAttrName": "ID",
+          "foreignKeys": [
+            {
+              "attrName": "APucoloID",
+              "refTableName": "Ablakpucolo",
+              "refAttrName": "ID"
+            }
+          ],
+          "indexFiles": [
+            {
+              "indexName": "IDIndex",
+              "isUnique": false,
+              "attribute": "ID"
+            },
+            {
+              "indexName": "UnokaAblak_APucoloID_Index",
+              "isUnique": false,
+              "attribute": "APucoloID"
+            }
+          ]
         }
       ]
     }
