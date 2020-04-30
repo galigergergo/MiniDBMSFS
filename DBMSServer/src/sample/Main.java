@@ -361,9 +361,6 @@ public class Main {
                         }
 
                         try {
-                            // inserting to MANGO Collection
-                            mongoCollection.insertOne(document);
-
                             // inserting into MANGO Index Collection
                             for (int i = 0; i < att.length; i++) {
                                 if (!val[i].equals("")) {
@@ -389,14 +386,23 @@ public class Main {
                                                 }
                                             } else {
                                                 Document entry = new Document("_id", val[i]);
-                                                entry.append("main_id", document.get("_id"));
-                                                mongoCollectionIndex.insertOne(entry);
+
+                                                // IF DOESNT EXIST YET
+                                                if (mongoCollectionIndex.find(entry).first() == null) {
+                                                    entry.append("main_id", document.get("_id"));
+                                                    mongoCollectionIndex.insertOne(entry);
+                                                } else {
+                                                    // NEEDS TO BE UNIQUE
+                                                    throw new Exception("Key Already Exists");
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
 
+                            // inserting to MANGO Collection
+                            mongoCollection.insertOne(document);
                             result = "Inserted correctly";
                         } catch (Exception e){
                             // if insert failed. e.g. duplicate key
@@ -443,6 +449,29 @@ public class Main {
 
                         MongoCollection<Document> mongoCollectionIndex;
                         Document docFK;
+                        // all documents that fulfill our condition
+                        FindIterable<Document> delDocs = null;
+                        // deletable docs
+                        switch (operator){
+                            case "=":
+                                delDocs = mongoCollection.find(Filters.eq(fieldName, delVal));
+                                break;
+                            case "!=":
+                                delDocs = mongoCollection.find(Filters.ne(fieldName, delVal));
+                                break;
+                            case "<=":
+                                delDocs = mongoCollection.find(Filters.lte(fieldName, delVal));
+                                break;
+                            case "<":
+                                delDocs = mongoCollection.find(Filters.lt(fieldName, delVal));
+                                break;
+                            case ">=":
+                                delDocs = mongoCollection.find(Filters.gte(fieldName, delVal));
+                                break;
+                            case ">":
+                                delDocs = mongoCollection.find(Filters.gt(fieldName, delVal));
+                                break;
+                        }
                         boolean child = false;
                         // the table in which a FK is pointing to our attr
                         String refTable = "";
@@ -452,6 +481,7 @@ public class Main {
                         String attrFk = "";
                         // the indexname from the child table
                         String childIndex = "";
+
                         // check if it is a foreign key in another table
                         for (Database db : databases.Databases) {
                             if (db.getDataBaseName().equals(dbName)) {
@@ -478,28 +508,6 @@ public class Main {
                                             // check for all of them if in the child table there is an attr
                                             // that points to our attr
 
-                                            // all documents that fulfill our condition
-                                            FindIterable<Document> delDocs = null;
-                                            switch (operator){
-                                                case "=":
-                                                    delDocs = mongoCollection.find(Filters.eq(fieldName, delVal));
-                                                    break;
-                                                case "!=":
-                                                    delDocs = mongoCollection.find(Filters.ne(fieldName, delVal));
-                                                    break;
-                                                case "<=":
-                                                    delDocs = mongoCollection.find(Filters.lte(fieldName, delVal));
-                                                    break;
-                                                case "<":
-                                                    delDocs = mongoCollection.find(Filters.lt(fieldName, delVal));
-                                                    break;
-                                                case ">=":
-                                                    delDocs = mongoCollection.find(Filters.gte(fieldName, delVal));
-                                                    break;
-                                                case ">":
-                                                    delDocs = mongoCollection.find(Filters.gt(fieldName, delVal));
-                                                    break;
-                                            }
                                             if (delDocs != null) {
                                                 for (Document next : delDocs) {
                                                     // the index file in child
@@ -548,30 +556,8 @@ public class Main {
                         }
 
 // AND THEN THE INSERT INTO CHILD-- what dis?
-
+                        // the DELETE
                         try {
-                            // find all deletable doc
-                            FindIterable<Document> delDocs = null;
-                            switch (operator) {
-                                case "=":
-                                    delDocs = mongoCollection.find(Filters.eq(fieldName, delVal));
-                                    break;
-                                case "!=":
-                                    delDocs = mongoCollection.find(Filters.ne(fieldName, delVal));
-                                    break;
-                                case "<=":
-                                    delDocs = mongoCollection.find(Filters.lte(fieldName, delVal));
-                                    break;
-                                case "<":
-                                    delDocs = mongoCollection.find(Filters.lt(fieldName, delVal));
-                                    break;
-                                case ">=":
-                                    delDocs = mongoCollection.find(Filters.gte(fieldName, delVal));
-                                    break;
-                                case ">":
-                                    delDocs = mongoCollection.find(Filters.gt(fieldName, delVal));
-                                    break;
-                            }
                             // delete from index
                             // for all docs, search in index files, and update
                             if (delDocs != null) {
@@ -593,6 +579,7 @@ public class Main {
                                                 attr = "_id";
                                             }
                                             String valu = (String) next.get(attr);
+
                                             if (ind.isUnique()) {
                                                 mongoCollectionIndex.deleteOne(new Document("_id", valu));
                                             } else {
