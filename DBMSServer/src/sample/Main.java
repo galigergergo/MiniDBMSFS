@@ -8,10 +8,14 @@ import com.mongodb.client.model.Filters;
 import data.*;
 import org.bson.Document;
 
+import javax.print.Doc;
+import java.awt.*;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.lang.reflect.Array;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -195,12 +199,18 @@ public class Main {
                                         mongoCollection = mongoDatabase.getCollection(tName);
                                         MongoCollection<Document> mongoCollectionIndex = mongoDatabase.getCollection(newI.getIndexName());
 
+                                        String attributes = "";
+                                        String[] attrList = null;
+                                        int i = -1;
                                         FindIterable<Document> doc = mongoCollection.find();
                                         for (Document next : doc) {
                                             boolean found = false;
                                             if (!newI.isUnique()) {
                                                 // check if already contains
-                                                FindIterable<Document> indexFile = mongoCollectionIndex.find(Filters.eq("_id", next.get(newI.getAttribute())));
+                                                attributes = (String) next.get("attrs");
+                                                attrList = attributes.split("#", -1);
+                                                i = getValueIndex(tempT, newI.getAttribute());
+                                                FindIterable<Document> indexFile = mongoCollectionIndex.find(Filters.eq("_id", attrList[i]));
                                                 for (Document next2 : indexFile) {
                                                     mongoCollectionIndex.deleteOne(next2);
                                                     next2.replace("main_id", next2.get("main_id") + "#" + next.get("_id"));
@@ -209,18 +219,22 @@ public class Main {
                                                     break;
                                                 }
                                                 if (!found) {
-                                                    Document entry = new Document("_id", next.get(newI.getAttribute()));
+                                                    attributes = (String) next.get("attrs");
+                                                    attrList = attributes.split("#", -1);
+                                                    i = getValueIndex(tempT, newI.getAttribute());
+                                                    Document entry = new Document("_id", attrList[i]);
                                                     entry.append("main_id", next.get("_id"));
                                                     mongoCollectionIndex.insertOne(entry);
                                                 }
                                             } else {
-                                                Document entry = new Document("_id", next.get(newI.getAttribute()));
+                                                attributes = (String) next.get("attrs");
+                                                attrList = attributes.split("#", -1);
+                                                getValueIndex(tempT, newI.getAttribute());
+                                                Document entry = new Document("_id", attrList[i]);
                                                 entry.append("main_id", next.get("_id"));
                                                 mongoCollectionIndex.insertOne(entry);
                                             }
                                         }
-
-
                                         break;
                                     }
                                 }
@@ -265,8 +279,7 @@ public class Main {
                                         // drop table from MANGO
                                         mongoClients.getDatabase(dbName).getCollection(tName).drop();
 
-                                        // here we should delete its index collections too from MANG
-
+                                        // here we should delete its index collections too from MANGO
                                         temp.getTables().remove(tempT);
                                         break;
                                     }
@@ -298,15 +311,9 @@ public class Main {
                         String[] val = value.split("#", -1);
 
                         // creating the Document to insert
-                        // key: value pairs
-                        // actually: _id: 'key'
-                        //           attr: value...
+                        // value#value#value#...# string
                         Document document = new Document("_id", key);
-                        for (int i = 0; i < att.length; i++) {
-                            if (!val[i].equals("")) {
-                                document.append(att[i], val[i]);
-                            }
-                        }
+                        document.append("attrs", value);
 
                         // check if our table is a child
                         // if so, check if the attr to which we are referring exists
@@ -321,14 +328,34 @@ public class Main {
                                             String refT = fk.getRefTableName();
                                             String refAttr = fk.getRefAttrName();
                                             String attr = fk.getAttrName();
-                                            String ourVal = (String) document.get(attr);
+                                            String ourVal = null;
+                                            ArrayList<String> attrList = new ArrayList<>();
+                                            for (Attribute at : t.getAttributes()) {
+                                                attrList.add(at.getAttributeName());
+                                            }
+                                            int i = 0;
+                                            boolean pkFound = false;
+                                            while (i < attrList.size() && !attrList.get(i).equals(attr)) {
+                                                if (currentTable.getpKAttrName().equals(attrList.get(i))) {
+                                                    pkFound = true;
+                                                }
+                                                i++;
+                                            }
+                                            if (pkFound) {
+                                                i--;
+                                            }
+                                            if (i < attrList.size()) {
+                                                ourVal =  val[i];
+                                            }
                                             if (ourVal == null) {
                                                 break;
                                             }
 
                                             // check if refAttr is pk
+                                            Table referenceT = null;
                                             for (Table refTab : db.getTables()) {
                                                 if (refTab.getTableName().equals(refT)) {
+                                                    referenceT = refTab;
                                                     if (refTab.getpKAttrName().equals(refAttr)) {
                                                         refAttr = "_id";
                                                     }
@@ -336,8 +363,15 @@ public class Main {
                                             }
 
                                             MongoCollection<Document> mongoCollectionFK = mongoDatabase.getCollection(refT);
-                                            Document found = mongoCollectionFK.find(Filters.eq(refAttr, ourVal)).first();
-                                            if (found == null) {
+                                            Document found = null;
+                                            ArrayList<Document> found2 = null;
+                                            if (refAttr.equals("_id")) {
+                                                found = mongoCollectionFK.find(Filters.eq("_id", ourVal)).first();
+                                            }
+                                            else {
+                                                found2 = findElements(referenceT, mongoCollectionFK, new Condition(refAttr, "=", ourVal));
+                                            }
+                                            if ((refAttr.equals("_id") && found == null) || (!refAttr.equals("_id") && found2 == null)) {
                                                 // doesn't exist. Cant insert
                                                 result = "Can't insert into parent table; Child hasn't got your value.";
                                                 os.writeObject(result);
@@ -447,31 +481,17 @@ public class Main {
                             }
                         }
 
+                        String attributes = "";
+                        String[] attrList = null;
+                        int indexx = -1;
+
                         MongoCollection<Document> mongoCollectionIndex;
                         Document docFK;
                         // all documents that fulfill our condition
-                        FindIterable<Document> delDocs = null;
+                        ArrayList<Document> delDocs = null;
                         // deletable docs
-                        switch (operator){
-                            case "=":
-                                delDocs = mongoCollection.find(Filters.eq(fieldName, delVal));
-                                break;
-                            case "!=":
-                                delDocs = mongoCollection.find(Filters.ne(fieldName, delVal));
-                                break;
-                            case "<=":
-                                delDocs = mongoCollection.find(Filters.lte(fieldName, delVal));
-                                break;
-                            case "<":
-                                delDocs = mongoCollection.find(Filters.lt(fieldName, delVal));
-                                break;
-                            case ">=":
-                                delDocs = mongoCollection.find(Filters.gte(fieldName, delVal));
-                                break;
-                            case ">":
-                                delDocs = mongoCollection.find(Filters.gt(fieldName, delVal));
-                                break;
-                        }
+                        delDocs = findElements(T, mongoCollection, condition);
+
                         boolean child = false;
                         // the table in which a FK is pointing to our attr
                         String refTable = "";
@@ -482,9 +502,17 @@ public class Main {
                         // the indexname from the child table
                         String childIndex = "";
 
+                        Table delTable = null;
+
                         // check if it is a foreign key in another table
                         for (Database db : databases.Databases) {
                             if (db.getDataBaseName().equals(dbName)) {
+                                for (Table delT : db.getTables()) {
+                                    if (delT.getTableName().equals(tName)) {
+                                        delTable = delT;
+                                    }
+                                }
+
                                 // search through all tables
                                 for (Table t : db.getTables()) {
                                     // search through foreign keys
@@ -517,7 +545,15 @@ public class Main {
                                                             childIndex = ind.getIndexName();
                                                             mongoCollectionIndex = mongoDatabase.getCollection(childIndex);
 
-                                                            String refValInDel = (String) next.get(refAttr);
+                                                            attributes = (String) next.get("attrs");
+                                                            attrList = attributes.split("#", -1);
+                                                            indexx = getValueIndex(delTable, refAttr);
+                                                            String refValInDel = "";
+                                                            if (refAttr.equals("_id")) {
+                                                                refValInDel = (String) next.get(refAttr);
+                                                            } else {
+                                                                refValInDel = attrList[indexx];
+                                                            }
                                                             // we search for this in the referrer table INDEX FILE
                                                             docFK = mongoCollectionIndex.find(new Document("_id", refValInDel)).first();
                                                             if (docFK != null) {
@@ -578,7 +614,15 @@ public class Main {
                                             if (T.getpKAttrName().equals(attr)) {
                                                 attr = "_id";
                                             }
-                                            String valu = (String) next.get(attr);
+                                            attributes = (String) next.get("attrs");
+                                            attrList = attributes.split("#", -1);
+                                            indexx = getValueIndex(delTable, attr);
+                                            String valu = "";
+                                            if (attr.equals("_id")) {
+                                                valu = (String) next.get(attr);
+                                            } else {
+                                                valu = attrList[indexx];
+                                            }
 
                                             if (ind.isUnique()) {
                                                 mongoCollectionIndex.deleteOne(new Document("_id", valu));
@@ -628,5 +672,103 @@ public class Main {
         os.close();
         s.close();
         ss.close();
+    }
+
+    // returns Table from database list
+    public Table findTable(DataBases databases, String databaseName, String tableName) {
+        for (Database db : databases.Databases) {
+            if (db.getDataBaseName().equals(databaseName)) {
+                for (Table t : db.getTables()) {
+                    if (t.getTableName().equals(tableName)) {
+                        return t;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    // get index of a value in attrs field of collection
+    public static int getValueIndex(Table table, String attributeName) {
+        ArrayList<Attribute> attrList = table.getAttributes();
+        int i = 0;
+        boolean pkFound = false;
+        while (i < attrList.size() && !attrList.get(i).getAttributeName().equals(attributeName)) {
+            if (attrList.get(i).getAttributeName().equals(table.getpKAttrName())) {
+                pkFound = true;
+            }
+            i++;
+        }
+        if (i >= attrList.size()) {
+            return -1;
+        }
+        if (pkFound) {
+            i--;        // pk not in the attrs field
+        }
+
+        return i;
+    }
+
+    // finds all entries in a table based on a condition
+    public static ArrayList<Document> findElements(Table table, MongoCollection<Document> collection, Condition condition) {
+        ArrayList<Document> list = new ArrayList<>();
+
+        // get index of the value in condition
+        int i = getValueIndex(table, condition.getAttribute());
+
+        FindIterable<Document> docs = collection.find();
+        for (Document iterator : docs) {
+            String attributes = (String) iterator.get("attrs");
+            String[] values = attributes.split("#", -1);
+
+            int num = 0;
+            int condNum = 0;
+            switch (condition.getOperator()) {
+                case "=":
+                    if (values[i].equals(condition.getValue())) {
+                        list.add(iterator);
+                    }
+                    break;
+                case "!=":
+                    if (!values[i].equals(condition.getValue())) {
+                        list.add(iterator);
+                    }
+                    break;
+                case "<=":
+                    num = Integer.parseInt(values[i]);
+                    condNum = Integer.parseInt(condition.getValue());
+                    if (num <= condNum) {
+                        list.add(iterator);
+                    }
+                    break;
+                case "<":
+                    num = Integer.parseInt(values[i]);
+                    condNum = Integer.parseInt(condition.getValue());
+                    if (num < condNum) {
+                        list.add(iterator);
+                    }
+                    break;
+                case ">=":
+                    num = Integer.parseInt(values[i]);
+                    condNum = Integer.parseInt(condition.getValue());
+                    if (num >= condNum) {
+                        list.add(iterator);
+                    }
+                    break;
+                case ">":
+                    num = Integer.parseInt(values[i]);
+                    condNum = Integer.parseInt(condition.getValue());
+                    if (num > condNum) {
+                        list.add(iterator);
+                    }
+                    break;
+            }
+        }
+
+        if (list.size() == 0) {
+            return null;
+        }
+
+        return list;
     }
 }
