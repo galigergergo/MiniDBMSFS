@@ -8,6 +8,7 @@ import com.mongodb.client.model.Filters;
 import data.*;
 import org.bson.Document;
 
+import javax.print.Doc;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
@@ -468,7 +469,7 @@ public class Main {
                         for(Database db : databases.Databases) {
                             if (db.getDataBaseName().equals(dbName)) {
                                 for (Table t : db.getTables()) {
-                                    if (t.getTableName().equals(tName)){
+                                    if (t.getTableName().equals(tName)) {
                                         T = t;
                                         if (t.getpKAttrName().equals(fieldName)) {
                                             fieldName = "_id";
@@ -488,7 +489,7 @@ public class Main {
                         ArrayList<Document> delDocs = null;
                         // deletable docs
                         delDocs = findElements(T, mongoCollection, condition);
-
+                        System.out.println(T.getTableName());
                         boolean child = false;
                         // the table in which a FK is pointing to our attr
                         String refTable = "";
@@ -709,6 +710,38 @@ public class Main {
     // finds all entries in a table based on a condition
     public static ArrayList<Document> findElements(Table table, MongoCollection<Document> collection, Condition condition) {
         ArrayList<Document> list = new ArrayList<>();
+
+        // if PK
+        if (table.getpKAttrName().equals(condition.getAttribute())) {
+            FindIterable<Document> result = null;
+            switch (condition.getOperator()){
+                case "=":
+                    result = collection.find(Filters.eq("_id", condition.getValue()));
+                    break;
+                case "!=":
+                    result = collection.find(Filters.ne("_id", condition.getValue()));
+                    break;
+                case "<=":
+                    result = collection.find(Filters.lte("_id", condition.getValue()));
+                    break;
+                case "<":
+                    result = collection.find(Filters.lt("_id", condition.getValue()));
+                    break;
+                case ">=":
+                    result = collection.find(Filters.gte("_id", condition.getValue()));
+                    break;
+                case ">":
+                    result = collection.find(Filters.gt("_id", condition.getValue()));
+                    break;
+            }
+            if (result == null) {
+                return null;
+            }
+            for (Document doc : result) {
+                list.add(doc);
+            }
+            return list;
+        }
 
         // get index of the value in condition
         int i = getValueIndex(table, condition.getAttribute());
