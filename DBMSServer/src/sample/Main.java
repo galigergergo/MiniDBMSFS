@@ -8,11 +8,8 @@ import com.mongodb.client.model.Filters;
 import data.*;
 import org.bson.Document;
 
-import javax.print.Doc;
-import java.awt.*;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.lang.reflect.Array;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -26,8 +23,8 @@ public class Main {
         // mert ez a Hudi clusterje.
         // User: banditar
         // pass: igen1234
-        String connectionString = "mongodb+srv://banditar:igen1234@cluster0-rhgog.mongodb.net/test?retryWrites=true&w=majority";
-        connectionString = "mongodb://banditar:igen1234@cluster0-shard-00-00-rhgog.mongodb.net:27017,cluster0-shard-00-01-rhgog.mongodb.net:27017,cluster0-shard-00-02-rhgog.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true&w=majority";
+        //String connectionString = "mongodb+srv://banditar:igen1234@cluster0-rhgog.mongodb.net/test?retryWrites=true&w=majority";
+        String connectionString = "mongodb://banditar:igen1234@cluster0-shard-00-00-rhgog.mongodb.net:27017,cluster0-shard-00-01-rhgog.mongodb.net:27017,cluster0-shard-00-02-rhgog.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true&w=majority";
         com.mongodb.client.MongoClient mongoClients;
 
         try {
@@ -199,8 +196,8 @@ public class Main {
                                         mongoCollection = mongoDatabase.getCollection(tName);
                                         MongoCollection<Document> mongoCollectionIndex = mongoDatabase.getCollection(newI.getIndexName());
 
-                                        String attributes = "";
-                                        String[] attrList = null;
+                                        String attributes;
+                                        String[] attrList;
                                         int i = -1;
                                         FindIterable<Document> doc = mongoCollection.find();
                                         for (Document next : doc) {

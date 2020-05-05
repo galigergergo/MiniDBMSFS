@@ -1,6 +1,8 @@
 package data;
 
-public class WhereCondition {
+import java.io.Serializable;
+
+public class WhereCondition implements Serializable {
     private TableAttribute attribute;
     private String operator;
     private String value;
