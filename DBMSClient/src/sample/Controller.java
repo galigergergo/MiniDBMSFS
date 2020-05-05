@@ -1207,6 +1207,18 @@ public class Controller {
                     selection.addCondition(c);
                 }
 
+                System.out.println("db=" + selection.getDatabase());
+                System.out.println("table=" + selection.getTable().getTableName());
+                for (TableAttribute ta : selection.getAttributes()) {
+                    System.out.println("tableAttrName=" + ta.getTableName());
+                    System.out.println("tableAttr=" + ta.getAttributeName());
+                }
+                for (WhereCondition wc : selection.getConditions()) {
+                    System.out.print("condition=" + wc.getAttribute().getAttributeName() + wc.getAttribute().getTableName());
+                    System.out.print(" " + wc.getOperator());
+                    System.out.println(" " + wc.getValue());
+                }
+
                 // send to the server
                 try {
                     os.writeUTF("select");
@@ -1214,7 +1226,7 @@ public class Controller {
                     os.writeObject(selection);
                     os.flush();
                 } catch (Exception ex) {
-                    System.out.println("Error! Transmit message: select");
+                    System.out.println("Error! Transmit message: select:" + ex);
                 }
 
                 selWherePane.setVisible(false);

@@ -35,11 +35,83 @@ public class Main {
         }
         System.out.println("Connected to MANGO");
 
+        // // beszuras 100 000 sort a costumers tablaba
+        // // Name, Age, Email Address, Category ID
+//        MongoDatabase Ddatabase2 = mongoClients.getDatabase("MyDb");
+//        // connecting to Collection from MANGO
+//        MongoCollection<Document> mongoCollection2 = Ddatabase2.getCollection("costumers");
+////
+//        FileWriter myWriter = new FileWriter("sorted_thousand_rows.txt");
 
+// 100 000 sor kiirasa
+//        FindIterable<Document> docx = mongoCollection2.find();
+//        int N = 200000;
+//        int iu = 0;
+//        String[] thousand = new String[N];
+//        for (Document next : docx) {
+////            System.out.println(next);
+////            myWriter.write(next + "\n");
+//            thousand[iu] = next.toString();
+//            iu++;
+//            thousand[iu] = next.toString();
+//            iu++;
+//        }
+// SORT AND UNIQUE ARRAY LIST
+//        Arrays.sort(thousand);
+//        String[] unique = Arrays.stream(thousand).distinct().toArray(String[]::new);
+//        for (String str : unique) {
+//            myWriter.write(str + "\n");
+//        }
+//        myWriter.close();
+//
+//        final java.util.Random rand = new java.util.Random();
+//        final String lexicon = "qwertyuioplkjhgfdsazxcvbnm";
+//
+//        int N = 100000;
+//        for (int i = 0; i < N; i++) {
+//            StringBuilder attrs = new StringBuilder();
+//            StringBuilder builder = new StringBuilder();
+//
+//            // name
+//            int length = rand.nextInt(5)+3;
+//            for(int j = 0; j < length; j++) {
+//                builder.append(lexicon.charAt(rand.nextInt(lexicon.length())));
+//            }
+//            String Name = builder.toString();
+//
+//            // age
+//            int Age = rand.nextInt(95) + 5;
+//
+//            // email
+//            if (rand.nextInt(10) <= 3) {
+//                builder = new StringBuilder("test@nomail.com");
+//            } else {
+//                final String lexiconemail = "qwertyuioplkjhgfdsazxcvbnm01234567890-_.";
+//                builder = new StringBuilder();
+//                length = rand.nextInt(3) + 4;
+//                for (int j = 0; j < length; j++) {
+//                    builder.append(lexiconemail.charAt(rand.nextInt(lexiconemail.length())));
+//                }
+//                builder.append('@');
+//                String[] emails = {"yahoo.com", "yahoo.ro", "yahoo.ru", "yahoo.hu", "gmail.com", "freemail.hu", "citromail.hu", "scs.ubbcluj.ro", "math.ubbcluj.ro", "cs.ubbcluj.ro"};
+//                int index = rand.nextInt(emails.length);
+//                builder.append(emails[index]);
+//            }
+//            String Email = builder.toString();
+//
+//            // category
+//            int Category = rand.nextInt(50) + 1;
+//
+//
+//            attrs.append(Name).append('#').append(Age).append('#').append(Email).append('#').append(Category).append('#');
+//            try {
+//                mongoCollection2.insertOne(new Document("_id", Integer.toString(i)).append("attrs", attrs.toString()));
+//            } catch (Exception e) {
+//                System.out.println("i = " + i + ": " + e);
+//            }
+//        }
 /*
-        MongoDatabase Ddatabase2 = mongoClients.getDatabase("MyDb");
-        // connecting to Collection from MANGO
-        MongoCollection<Document> mongoCollection2 = Ddatabase2.getCollection("Ablakpucolo");
+
 
         // iterate through FIND
         FindIterable<Document> doc = mongoCollection2.find(Filters.gte("email", ""));

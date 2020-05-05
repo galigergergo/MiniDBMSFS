@@ -40,7 +40,7 @@
               "attributeName": "email",
               "type": "varchar",
               "length": 15,
-              "isUnique": true
+              "isUnique": false
             },
             {
               "attributeName": "name",
@@ -68,66 +68,6 @@
               "indexName": "IDIndex",
               "isUnique": false,
               "attribute": "ID"
-            },
-            {
-              "indexName": "emailIndex",
-              "isUnique": true,
-              "attribute": "email"
-            },
-            {
-              "indexName": "Helperini",
-              "isUnique": true,
-              "attribute": "Help"
-            },
-            {
-              "indexName": "Huhu",
-              "isUnique": true,
-              "attribute": "Help"
-            }
-          ]
-        },
-        {
-          "tableName": "ChildAblak",
-          "fileName": "afilename",
-          "rowLength": 123,
-          "attributes": [
-            {
-              "attributeName": "Nev",
-              "type": "varchar",
-              "length": 10,
-              "isUnique": true
-            },
-            {
-              "attributeName": "Ar",
-              "type": "int",
-              "length": 0,
-              "isUnique": false
-            },
-            {
-              "attributeName": "AblakPucID",
-              "type": "int",
-              "length": 0,
-              "isUnique": false
-            }
-          ],
-          "pKAttrName": "Nev",
-          "foreignKeys": [
-            {
-              "attrName": "AblakPucID",
-              "refTableName": "Ablakpucolo",
-              "refAttrName": "ID"
-            }
-          ],
-          "indexFiles": [
-            {
-              "indexName": "NevIndex",
-              "isUnique": false,
-              "attribute": "Nev"
-            },
-            {
-              "indexName": "AblakPucIDIndex",
-              "isUnique": false,
-              "attribute": "AblakPucID"
             }
           ]
         },
@@ -167,6 +107,52 @@
               "indexName": "UnokaAblak_APucoloID_Index",
               "isUnique": false,
               "attribute": "APucoloID"
+            }
+          ]
+        },
+        {
+          "tableName": "costumers",
+          "fileName": "afilename",
+          "rowLength": 123,
+          "attributes": [
+            {
+              "attributeName": "Name",
+              "type": "varchar",
+              "length": 20,
+              "isUnique": false
+            },
+            {
+              "attributeName": "Age",
+              "type": "int",
+              "length": 0,
+              "isUnique": false
+            },
+            {
+              "attributeName": "Email Address",
+              "type": "varchar",
+              "length": 30,
+              "isUnique": false
+            },
+            {
+              "attributeName": "CategoryID",
+              "type": "int",
+              "length": 0,
+              "isUnique": false
+            },
+            {
+              "attributeName": "ID",
+              "type": "int",
+              "length": 0,
+              "isUnique": true
+            }
+          ],
+          "pKAttrName": "ID",
+          "foreignKeys": [],
+          "indexFiles": [
+            {
+              "indexName": "IDIndex",
+              "isUnique": false,
+              "attribute": "ID"
             }
           ]
         },
