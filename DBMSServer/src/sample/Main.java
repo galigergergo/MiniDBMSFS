@@ -1,9 +1,6 @@
 package sample;
 
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.*;
 import com.mongodb.client.model.Filters;
 import data.*;
 import org.bson.Document;
@@ -14,6 +11,8 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -184,8 +183,8 @@ public class Main {
         MongoDatabase mongoDatabase;
         MongoCollection<Document> mongoCollection;
 
-        while(!str.equals("stop")) {
-            if(is.available() > 0) {
+        while (!str.equals("stop")) {
+            if (is.available() > 0) {
                 System.out.println("got");
                 str = is.readUTF();
                 System.out.println(str);
@@ -408,6 +407,7 @@ public class Main {
                                             while (i < attrList.size() && !attrList.get(i).equals(attr)) {
                                                 if (currentTable.getpKAttrName().equals(attrList.get(i))) {
                                                     pkFound = true;
+                                                    break;
                                                 }
                                                 i++;
                                             }
@@ -415,7 +415,7 @@ public class Main {
                                                 i--;
                                             }
                                             if (i < attrList.size()) {
-                                                ourVal =  val[i];
+                                                ourVal = val[i];
                                             }
                                             if (ourVal == null) {
                                                 break;
@@ -437,9 +437,10 @@ public class Main {
                                             ArrayList<Document> found2 = null;
                                             if (refAttr.equals("_id")) {
                                                 found = mongoCollectionFK.find(Filters.eq("_id", ourVal)).first();
-                                            }
-                                            else {
-                                                found2 = findElements(referenceT, mongoCollectionFK, new Condition(refAttr, "=", ourVal));
+                                            } else {
+                                                if (referenceT != null) {
+                                                    found2 = findElements(referenceT, mongoCollectionFK, new Condition(refAttr, "=", ourVal));
+                                                }
                                             }
                                             if ((refAttr.equals("_id") && found == null) || (!refAttr.equals("_id") && found2 == null)) {
                                                 // doesn't exist. Cant insert
@@ -467,37 +468,52 @@ public class Main {
                         try {
                             // inserting into MANGO Index Collection
                             for (int i = 0; i < att.length; i++) {
-                                if (!val[i].equals("")) {
-                                    for (IndexFile ind : currentTable.getIndexFiles()) {
-                                        if (ind.getAttribute().equals(att[i])) {
-                                            MongoCollection<Document> mongoCollectionIndex = mongoDatabase.getCollection(ind.getIndexName());
+                                if (val[i] != null) {
+                                    if (!val[i].equals("")) {
+                                        if (currentTable != null) {
+                                            for (IndexFile ind : currentTable.getIndexFiles()) {
+                                                if (ind.getAttribute().equals(att[i])) {
+                                                    MongoCollection<Document> mongoCollectionIndex = mongoDatabase.getCollection(ind.getIndexName());
 
-                                            boolean found = false;
-                                            if (!ind.isUnique()) {
-                                                // check if already contains
-                                                FindIterable<Document> indexFile = mongoCollectionIndex.find(Filters.eq("_id", val[i]));
-                                                for (Document next2 : indexFile) {
-                                                    mongoCollectionIndex.deleteOne(next2);
-                                                    next2.replace("main_id", next2.get("main_id") + "#" + document.get("_id"));
-                                                    mongoCollectionIndex.insertOne(next2);
-                                                    found = true;
-                                                    break;
-                                                }
-                                                if (!found) {
-                                                    Document entry = new Document("_id", val[i]);
-                                                    entry.append("main_id", document.get("_id"));
-                                                    mongoCollectionIndex.insertOne(entry);
-                                                }
-                                            } else {
-                                                Document entry = new Document("_id", val[i]);
+                                                    boolean found = false;
+                                                    if (!ind.isUnique()) {
+                                                        // check if already contains
+                                                        FindIterable<Document> indexFile = mongoCollectionIndex.find(Filters.eq("_id", val[i]));
+                                                        for (Document next2 : indexFile) {
+                                                            mongoCollectionIndex.deleteOne(next2);
+                                                            next2.replace("main_id", next2.get("main_id") + "#" + document.get("_id"));
+                                                            mongoCollectionIndex.insertOne(next2);
+                                                            found = true;
+                                                            break;
+                                                        }
+                                                        if (!found) {
+                                                            Document entry;
 
-                                                // IF DOESNT EXIST YET
-                                                if (mongoCollectionIndex.find(entry).first() == null) {
-                                                    entry.append("main_id", document.get("_id"));
-                                                    mongoCollectionIndex.insertOne(entry);
-                                                } else {
-                                                    // NEEDS TO BE UNIQUE
-                                                    throw new Exception("Key Already Exists");
+                                                            // TODO
+                                                            // correct every insert and find, so it would work on int _ids
+//                                                            // check if INT
+//                                                            try {
+//                                                                int intVal = Integer.parseInt(val[i]);
+//                                                                entry = new Document("_id", intVal);
+//                                                            } catch (Exception e) {
+//                                                                // if not, treat it as string
+                                                            entry = new Document("_id", val[i]);
+//                                                        }
+                                                            entry.append("main_id", document.get("_id"));
+                                                            mongoCollectionIndex.insertOne(entry);
+                                                        }
+                                                    } else {
+                                                        Document entry = new Document("_id", val[i]);
+
+                                                        // IF DOESNT EXIST YET
+                                                        if (mongoCollectionIndex.find(entry).first() == null) {
+                                                            entry.append("main_id", document.get("_id"));
+                                                            mongoCollectionIndex.insertOne(entry);
+                                                        } else {
+                                                            // NEEDS TO BE UNIQUE
+                                                            throw new Exception("Key Already Exists");
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -508,7 +524,7 @@ public class Main {
                             // inserting to MANGO Collection
                             mongoCollection.insertOne(document);
                             result = "Inserted correctly";
-                        } catch (Exception e){
+                        } catch (Exception e) {
                             // if insert failed. e.g. duplicate key
                             result = "Insert failed\n" + e;
                         }
@@ -533,12 +549,12 @@ public class Main {
                         mongoCollection = mongoDatabase.getCollection(tName);
 
                         Table T = null;
-                        String operator = condition.getOperator();
+//                        String operator = condition.getOperator();
                         String fieldName = condition.getAttribute();
-                        String delVal = condition.getValue();
+//                        String delVal = condition.getValue();
 
                         // check if attribute is PK
-                        for(Database db : databases.Databases) {
+                        for (Database db : databases.Databases) {
                             if (db.getDataBaseName().equals(dbName)) {
                                 for (Table t : db.getTables()) {
                                     if (t.getTableName().equals(tName)) {
@@ -551,98 +567,106 @@ public class Main {
                             }
                         }
 
-                        String attributes = "";
-                        String[] attrList = null;
-                        int indexx = -1;
+                        String attributes;
+                        String[] attrList;
+                        int indexx;
 
                         MongoCollection<Document> mongoCollectionIndex;
                         Document docFK;
                         // all documents that fulfill our condition
-                        ArrayList<Document> delDocs = null;
+                        ArrayList<Document> delDocs;
                         // deletable docs
-                        delDocs = findElements(T, mongoCollection, condition);
-                        System.out.println(T.getTableName());
-                        boolean child = false;
-                        // the table in which a FK is pointing to our attr
-                        String refTable = "";
-                        // the attr in our table to which the fk is pointing to
-                        String refAttr = "";
-                        // the child attribute which is bound to our attr
-                        String attrFk = "";
-                        // the indexname from the child table
-                        String childIndex = "";
+                        if (T != null) {
+                            delDocs = findElements(T, mongoCollection, condition);
+                            System.out.println(T.getTableName());
+                            boolean child = false;
+                            // the table in which a FK is pointing to our attr
+//                        String refTable = "";
+                            // the attr in our table to which the fk is pointing to
+                            String refAttr;
+                            // the child attribute which is bound to our attr
+                            String attrFk;
+                            // the indexname from the child table
+                            String childIndex;
 
-                        Table delTable = null;
+                            Table delTable = null;
 
-                        // check if it is a foreign key in another table
-                        for (Database db : databases.Databases) {
-                            if (db.getDataBaseName().equals(dbName)) {
-                                for (Table delT : db.getTables()) {
-                                    if (delT.getTableName().equals(tName)) {
-                                        delTable = delT;
+                            // check if it is a foreign key in another table
+                            for (Database db : databases.Databases) {
+                                if (db.getDataBaseName().equals(dbName)) {
+                                    for (Table delT : db.getTables()) {
+                                        if (delT.getTableName().equals(tName)) {
+                                            delTable = delT;
+                                        }
                                     }
-                                }
 
-                                // search through all tables
-                                for (Table t : db.getTables()) {
-                                    // search through foreign keys
-                                    for (ForeignKey fk : t.getForeignKeys()) {
-                                        // if one is referring to our Table
-                                        if (fk.getRefTableName().equals(tName)){
-                                            refAttr = fk.getRefAttrName();
-                                            attrFk = fk.getAttrName();
+                                    // search through all tables
+                                    for (Table t : db.getTables()) {
+                                        // search through foreign keys
+                                        for (ForeignKey fk : t.getForeignKeys()) {
+                                            // if one is referring to our Table
+                                            if (fk.getRefTableName().equals(tName)) {
+                                                refAttr = fk.getRefAttrName();
+                                                attrFk = fk.getAttrName();
 
-                                            // check if refAttr is PK
-                                            for (Table delT : db.getTables()) {
-                                                if (delT.getTableName().equals(tName)) {
-                                                    if (delT.getpKAttrName().equals(refAttr)) {
-                                                        refAttr = "_id";
-                                                    }
-                                                }
-                                            }
-
-                                            // means that we are a Parent
-                                            // list all entries that should be deleted
-                                            // check for all of them if in the child table there is an attr
-                                            // that points to our attr
-
-                                            if (delDocs != null) {
-                                                for (Document next : delDocs) {
-                                                    // the index file in child
-                                                    for (IndexFile ind : t.getIndexFiles()) {
-                                                        if (ind.getAttribute().equals(attrFk) && !ind.isUnique()) {
-                                                            // the correct index
-                                                            childIndex = ind.getIndexName();
-                                                            mongoCollectionIndex = mongoDatabase.getCollection(childIndex);
-
-                                                            attributes = (String) next.get("attrs");
-                                                            attrList = attributes.split("#", -1);
-                                                            indexx = getValueIndex(delTable, refAttr);
-                                                            String refValInDel = "";
-                                                            if (refAttr.equals("_id")) {
-                                                                refValInDel = (String) next.get(refAttr);
-                                                            } else {
-                                                                refValInDel = attrList[indexx];
-                                                            }
-                                                            // we search for this in the referrer table INDEX FILE
-                                                            docFK = mongoCollectionIndex.find(new Document("_id", refValInDel)).first();
-                                                            if (docFK != null) {
-                                                                // it means it exists >> it is a Child of our table
-                                                                result = "Cannot delete, because it is a Parent to an existing Child";
-                                                                os.writeObject(result);
-                                                                os.flush();
-
-                                                                child = true;
-                                                                break;
-                                                            }
+                                                // check if refAttr is PK
+                                                for (Table delT : db.getTables()) {
+                                                    if (delT.getTableName().equals(tName)) {
+                                                        if (delT.getpKAttrName().equals(refAttr)) {
+                                                            refAttr = "_id";
                                                         }
                                                     }
                                                 }
-                                                if (child) {
-                                                    // it was found already
-                                                    break;
+
+                                                // means that we are a Parent
+                                                // list all entries that should be deleted
+                                                // check for all of them if in the child table there is an attr
+                                                // that points to our attr
+
+                                                if (delDocs != null) {
+                                                    for (Document next : delDocs) {
+                                                        // the index file in child
+                                                        for (IndexFile ind : t.getIndexFiles()) {
+                                                            if (ind.getAttribute().equals(attrFk) && !ind.isUnique()) {
+                                                                // the correct index
+                                                                childIndex = ind.getIndexName();
+                                                                mongoCollectionIndex = mongoDatabase.getCollection(childIndex);
+
+                                                                attributes = (String) next.get("attrs");
+                                                                attrList = attributes.split("#", -1);
+                                                                if (delTable != null) {
+                                                                    indexx = getValueIndex(delTable, refAttr);
+                                                                    String refValInDel;
+                                                                    if (refAttr.equals("_id")) {
+                                                                        refValInDel = (String) next.get(refAttr);
+                                                                    } else {
+                                                                        refValInDel = attrList[indexx];
+                                                                    }
+                                                                    // we search for this in the referrer table INDEX FILE
+                                                                    docFK = mongoCollectionIndex.find(new Document("_id", refValInDel)).first();
+                                                                    if (docFK != null) {
+                                                                        // it means it exists >> it is a Child of our table
+                                                                        result = "Cannot delete, because it is a Parent to an existing Child";
+                                                                        os.writeObject(result);
+                                                                        os.flush();
+
+                                                                        child = true;
+                                                                        break;
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                    if (child) {
+                                                        // it was found already
+                                                        break;
+                                                    }
                                                 }
                                             }
+                                        }
+                                        if (child) {
+                                            // it was found already
+                                            break;
                                         }
                                     }
                                     if (child) {
@@ -650,88 +674,89 @@ public class Main {
                                         break;
                                     }
                                 }
-                                if (child) {
-                                    // it was found already
-                                    break;
-                                }
                             }
-                        }
-                        if (child) {
-                            // it was found already
-                            break;
-                        }
+                            if (child) {
+                                // it was found already
+                                break;
+                            }
 
-// AND THEN THE INSERT INTO CHILD-- what dis?
-                        // the DELETE
-                        try {
-                            // delete from index
-                            // for all docs, search in index files, and update
-                            if (delDocs != null) {
-                                for (Document next : delDocs) {
-                                    if (T.getIndexFiles() != null) {
-                                        int i = 0;
-                                        for (IndexFile ind : T.getIndexFiles()) {
-                                            i++;
-                                            if (i == 1) {
-                                                // skip the PK index. in which we don't delete
-                                                continue;
-                                            }
-
-                                            mongoCollectionIndex = mongoDatabase.getCollection(ind.getIndexName());
-
-                                            String attr = ind.getAttribute();
-                                            // check if attr is PK
-                                            if (T.getpKAttrName().equals(attr)) {
-                                                attr = "_id";
-                                            }
-                                            attributes = (String) next.get("attrs");
-                                            attrList = attributes.split("#", -1);
-                                            indexx = getValueIndex(delTable, attr);
-                                            String valu = "";
-                                            if (attr.equals("_id")) {
-                                                valu = (String) next.get(attr);
-                                            } else {
-                                                valu = attrList[indexx];
-                                            }
-
-                                            if (ind.isUnique()) {
-                                                mongoCollectionIndex.deleteOne(new Document("_id", valu));
-                                            } else {
-                                                // delete the attr from the '#'
-                                                Document doc = mongoCollectionIndex.find(new Document("_id", valu)).first();
-                                                mongoCollectionIndex.deleteOne(doc);
-                                                String main = (String) doc.get("main_id");
-                                                String[] mains = main.split("#");
-                                                main = "";
-                                                for (String indexString : mains) {
-                                                    if (!indexString.equals(next.get("_id"))) {
-                                                        main = main.concat(indexString).concat("#");
-                                                    }
+                            // the DELETE
+                            try {
+                                // delete from index
+                                // for all docs, search in index files, and update
+                                if (delDocs != null) {
+                                    for (Document next : delDocs) {
+                                        if (T.getIndexFiles() != null) {
+                                            int i = 0;
+                                            for (IndexFile ind : T.getIndexFiles()) {
+                                                i++;
+                                                if (i == 1) {
+                                                    // skip the PK index. in which we don't delete
+                                                    continue;
                                                 }
-                                                if (main.length() > 0) {
-                                                    main = main.substring(0, main.length() - 1);
-                                                    doc.replace("main_id", main);
-                                                    mongoCollectionIndex.insertOne(doc);
-                                                } else {
-                                                    result = "Record does not exist";
-                                                    os.writeObject(result);
-                                                    os.flush();
-                                                    break;
+
+                                                mongoCollectionIndex = mongoDatabase.getCollection(ind.getIndexName());
+
+                                                String attr = ind.getAttribute();
+                                                // check if attr is PK
+                                                if (T.getpKAttrName().equals(attr)) {
+                                                    attr = "_id";
+                                                }
+                                                attributes = (String) next.get("attrs");
+                                                attrList = attributes.split("#", -1);
+                                                if (delTable != null) {
+                                                    indexx = getValueIndex(delTable, attr);
+                                                    String valu;
+                                                    if (attr.equals("_id")) {
+                                                        valu = (String) next.get(attr);
+                                                    } else {
+                                                        valu = attrList[indexx];
+                                                    }
+
+                                                    if (ind.isUnique()) {
+                                                        mongoCollectionIndex.deleteOne(new Document("_id", valu));
+                                                    } else {
+                                                        // delete the attr from the '#'
+                                                        Document doc = mongoCollectionIndex.find(new Document("_id", valu)).first();
+                                                        if (doc != null) {
+                                                            mongoCollectionIndex.deleteOne(doc);
+                                                            String main = (String) doc.get("main_id");
+                                                            String[] mains = main.split("#");
+                                                            main = "";
+                                                            for (String indexString : mains) {
+                                                                if (!indexString.equals(next.get("_id"))) {
+                                                                    main = main.concat(indexString).concat("#");
+                                                                }
+                                                            }
+                                                            if (main.length() > 0) {
+                                                                main = main.substring(0, main.length() - 1);
+                                                                doc.replace("main_id", main);
+                                                                mongoCollectionIndex.insertOne(doc);
+                                                            } else {
+                                                                result = "Record does not exist";
+                                                                os.writeObject(result);
+                                                                os.flush();
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
+                                        // delete from table
+                                        mongoCollection.deleteOne(next);
                                     }
-                                    // delete from table
-                                    mongoCollection.deleteOne(next);
                                 }
-                            }
 
-                            result = "Deleted correctly";
-                        } catch (Exception e) {
-                            System.out.println("Delete Except: " + e);
-                            result = "Delete failed. sorry :(";
+                            } catch (Exception e) {
+                                System.out.println("Delete Except: " + e);
+                                result = "Delete failed. sorry :(";
+                                os.writeObject(result);
+                                os.flush();
+                                break;
+                            }
                         }
-                        // hiba/sikeruzenet visszaterites
+                        result = "Deleted correctly";
                         os.writeObject(result);
                         os.flush();
                         break;
@@ -739,15 +764,13 @@ public class Main {
                         Selection selection = (Selection) is.readObject();
                         System.out.println(selection.getDatabase());
 
+                        T = selection.getTable();
+
                         mongoDatabase = mongoClients.getDatabase(selection.getDatabase());
-                        mongoCollection = mongoDatabase.getCollection(selection.getTable().getTableName());
+                        mongoCollection = mongoDatabase.getCollection(T.getTableName());
 
-                        FindIterable test = mongoCollection.find();
-
-                        ArrayList<Document> selectedDocs = iterableToList(test);
                         // szelekcio, metszet, rendezes, duplikatumoktol megszabadulas -> selectedDocs
-
-
+                        ArrayList<Document> selectedDocs = findElementsOnWhere(T, mongoCollection, selection.getConditions(), mongoDatabase);
 
                         // projection
                         ArrayList<String> toSend = projection(selection, selectedDocs, databases);
@@ -798,11 +821,11 @@ public class Main {
         ArrayList<String> result = new ArrayList<>();
 
         // add first row to result, row of attribute names
-        String row = "";
+        StringBuilder row = new StringBuilder();
         for (TableAttribute attr : selection.getAttributes()) {
-            row += attr.getTableName() + " " + attr.getAttributeName() + "#";
+            row.append(attr.getTableName()).append(" ").append(attr.getAttributeName()).append("#");
         }
-        result.add(row);
+        result.add(row.toString());
 
         // get tables of the selection attributes
         ArrayList<Table> tables = new ArrayList<>();
@@ -827,29 +850,31 @@ public class Main {
 
         if (eachHasIndex) {
             // do something ..
+            // TODO
+
 
         } else {
-            // get dollection indeces of variables
+            // get collection indeces of variables
             int[] indeces = new int[tables.size()];
             i = 0;
             for (TableAttribute attr : selection.getAttributes()) {
-                indeces[i] = (getValueIndex(tables.get(i), attr.getAttributeName()));
+                indeces[i] = getValueIndex(tables.get(i), attr.getAttributeName());
                 i++;
             }
 
             // insert strings into output
             for (Document doc : docs) {
-                row = "";
+                row = new StringBuilder();
                 for (int j = 0; j < tables.size(); j++) {
                     if (indeces[j] == -1) {
-                        row += (String) doc.get("_id");
+                        row.append((String) doc.get("_id"));
                     } else {
                         String attrs = (String) doc.get("attrs");
-                        row += attrs.split("#", -1)[indeces[j]];
+                        row.append(attrs.split("#", -1)[indeces[j]]);
                     }
-                    row += "#";
+                    row.append("#");
                 }
-                result.add(row);
+                result.add(row.toString());
             }
         }
 
@@ -883,6 +908,7 @@ public class Main {
     // get index of a value in attrs field of collection
     public static int getValueIndex(Table table, String attributeName) {
         // if pk return -1
+
         if (table.getpKAttrName().equals(attributeName)) {
             return -1;
         }
@@ -897,12 +923,12 @@ public class Main {
             i++;
         }
         if (i >= attrList.size()) {
+            System.out.println(attrList.size());
             return -1;
         }
         if (pkFound) {
             i--;        // pk not in the attrs field
         }
-
         return i;
     }
 
@@ -950,8 +976,8 @@ public class Main {
             String attributes = (String) iterator.get("attrs");
             String[] values = attributes.split("#", -1);
 
-            int num = 0;
-            int condNum = 0;
+            int num;
+            int condNum;
             switch (condition.getOperator()) {
                 case "=":
                     if (values[i].equals(condition.getValue())) {
@@ -999,5 +1025,169 @@ public class Main {
         }
 
         return list;
+    }
+
+    // finds all entries in a table based on a MULTIPLE where conditions
+    public static ArrayList<Document> findElementsOnWhere(Table table, MongoCollection<Document> collection, ArrayList<WhereCondition> conditions, MongoDatabase mongoDb) {
+        // Stores in a Set so no duplicates will be present.
+        // At the end, it converts to ArrayList<>
+        Set<Document> set = new HashSet<>();
+// TODO METSZES, mert most egyeszites van
+        boolean[] condIndexPK = new boolean[conditions.size()];
+
+        int j = -1;
+        // iterate through whereConditions
+        // check for PKs and INDEXes
+        for (WhereCondition condition : conditions) {
+            j++;
+            // if whereCond.Table == our table
+            // if not, then, boy'oh'boy. this function isn't what you should've called
+            if (condition.getAttribute().getTableName().equals(table.getTableName())) {
+                // if PK
+                if (table.getpKAttrName().equals(condition.getAttribute().getAttributeName())) {
+                    condIndexPK[j] = true;
+                    FindIterable<Document> result = null;
+                    switch (condition.getOperator()) {
+                        case "=":
+                            result = collection.find(Filters.eq("_id", condition.getValue()));
+                            break;
+                        case "!=":
+                            result = collection.find(Filters.ne("_id", condition.getValue()));
+                            break;
+                        case "<=":
+                            result = collection.find(Filters.lte("_id", condition.getValue()));
+                            break;
+                        case "<":
+                            result = collection.find(Filters.lt("_id", condition.getValue()));
+                            break;
+                        case ">=":
+                            result = collection.find(Filters.gte("_id", condition.getValue()));
+                            break;
+                        case ">":
+                            result = collection.find(Filters.gt("_id", condition.getValue()));
+                            break;
+                    }
+                    if (result != null) {
+                        for (Document doc : result) {
+                            set.add(doc);
+                        }
+                    }
+                } else {
+                    // if HAS INDEX on it
+                    IndexFile index = findIndexOnAttribute(table, condition.getAttribute().getAttributeName());
+                    if (index != null) {
+                        // index table
+                        MongoCollection<Document> indexCollection = mongoDb.getCollection(index.getIndexName());
+                        FindIterable<Document> result = null;
+                        switch (condition.getOperator()) {
+                            case "=":
+                                result = indexCollection.find(Filters.eq("_id", condition.getValue()));
+                                break;
+                            case "!=":
+                                result = indexCollection.find(Filters.ne("_id", condition.getValue()));
+                                break;
+                            case "<=":
+                                result = indexCollection.find(Filters.lte("_id", condition.getValue()));
+                                break;
+                            case "<":
+                                result = indexCollection.find(Filters.lt("_id", condition.getValue()));
+                                break;
+                            case ">=":
+                                result = indexCollection.find(Filters.gte("_id", condition.getValue()));
+                                break;
+                            case ">":
+                                result = indexCollection.find(Filters.gt("_id", condition.getValue()));
+                                break;
+                        }
+                        if (result != null) {
+                            for (Document doc : result) {
+                                // find docs in main Table with ids from indexfile
+                                // split it by #
+                                Document indDoc = collection.find().first();
+                                if (indDoc != null) {
+                                    String[] main_id = ((String) indDoc.get("main_id")).split("#", -1);
+                                    // require it's doc from main table, by the main_id
+                                    for (String id : main_id) {
+                                        Document docx = collection.find(new Document("_id", id)).first();
+                                        if (docx != null) {
+                                            set.add(docx);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // manually add docs if are good for us
+        FindIterable<Document> docs = collection.find();
+        for (Document iterator : docs) {
+            String attributes = (String) iterator.get("attrs");
+            String[] values = attributes.split("#", -1);
+
+            j = -1;
+            for (WhereCondition condition : conditions) {
+                j++;
+                // if whereCond.Table == our table
+                if (condition.getAttribute().getTableName().equals(table.getTableName())) {
+                    // if not PK
+                    if (!condIndexPK[j]) {
+                        // get index of the value in condition
+                        int i = getValueIndex(table, condition.getAttribute().getAttributeName());
+
+                        int num;
+                        int condNum;
+                        switch (condition.getOperator()) {
+                            case "=":
+                                if (values[i].equals(condition.getValue())) {
+                                    set.add(iterator);
+                                }
+                                break;
+                            case "!=":
+                                if (!values[i].equals(condition.getValue())) {
+                                    set.add(iterator);
+                                }
+                                break;
+                            case "<=":
+                                num = Integer.parseInt(values[i]);
+                                condNum = Integer.parseInt(condition.getValue());
+                                if (num <= condNum) {
+                                    set.add(iterator);
+                                }
+                                break;
+                            case "<":
+                                num = Integer.parseInt(values[i]);
+                                condNum = Integer.parseInt(condition.getValue());
+                                if (num < condNum) {
+                                    set.add(iterator);
+                                }
+                                break;
+                            case ">=":
+                                num = Integer.parseInt(values[i]);
+                                condNum = Integer.parseInt(condition.getValue());
+                                if (num >= condNum) {
+                                    set.add(iterator);
+                                }
+                                break;
+                            case ">":
+                                num = Integer.parseInt(values[i]);
+                                condNum = Integer.parseInt(condition.getValue());
+                                if (num > condNum) {
+                                    set.add(iterator);
+                                }
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (set.size() == 0) {
+            return null;
+        }
+
+        return new ArrayList<>(set);
     }
 }

@@ -1208,18 +1208,20 @@ public class Controller {
                 for(WhereCondition c : conds) {
                     selection.addCondition(c);
                 }
-
-                System.out.println("db=" + selection.getDatabase());
-                System.out.println("table=" + selection.getTable().getTableName());
-                for (TableAttribute ta : selection.getAttributes()) {
-                    System.out.println("tableAttrName=" + ta.getTableName());
-                    System.out.println("tableAttr=" + ta.getAttributeName());
-                }
-                for (WhereCondition wc : selection.getConditions()) {
-                    System.out.print("condition=" + wc.getAttribute().getAttributeName() + wc.getAttribute().getTableName());
-                    System.out.print(" " + wc.getOperator());
-                    System.out.println(" " + wc.getValue());
-                }
+// db print
+//                System.out.println("db=" + selection.getDatabase());
+//                System.out.println("table=" + selection.getTable().getTableName());
+//                System.out.println("attribsPROJ:");
+//                for (TableAttribute ta : selection.getAttributes()) {
+//                    System.out.println("tableAttrName=" + ta.getTableName());
+//                    System.out.println("tableAttr=" + ta.getAttributeName());
+//                }
+//                System.out.println("\nCONDattrsSEL:");
+//                for (WhereCondition wc : selection.getConditions()) {
+//                    System.out.print("condition=" + wc.getAttribute().getAttributeName());
+//                    System.out.print(" " + wc.getOperator());
+//                    System.out.println(" " + wc.getValue());
+//                }
 
                 // send to the server
                 try {
