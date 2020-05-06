@@ -41,12 +41,10 @@ public class MySocketListener implements Runnable {
                     first = false;
                 } else if (!over) {
                     controller.addOutputRow(read);
-                }
-                else {
+                } else {
                     first = true;
                     over = false;
                 }
-                System.out.println((String) obj);
             }
             else if(obj instanceof List) {
                 databases = (List<Database>) obj;

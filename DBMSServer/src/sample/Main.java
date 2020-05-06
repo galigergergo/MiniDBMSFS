@@ -8,6 +8,7 @@ import com.mongodb.client.model.Filters;
 import data.*;
 import org.bson.Document;
 
+import javax.print.Doc;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
@@ -738,8 +739,28 @@ public class Main {
                         Selection selection = (Selection) is.readObject();
                         System.out.println(selection.getDatabase());
 
-                        // select
+                        mongoDatabase = mongoClients.getDatabase(selection.getDatabase());
+                        mongoCollection = mongoDatabase.getCollection(selection.getTable().getTableName());
 
+                        FindIterable test = mongoCollection.find();
+
+                        ArrayList<Document> selectedDocs = iterableToList(test);
+                        // szelekcio, metszet, rendezes, duplikatumoktol megszabadulas -> selectedDocs
+
+
+
+                        // projection
+                        ArrayList<String> toSend = projection(selection, selectedDocs, databases);
+
+                        // send data
+                        for (String output : toSend) {
+                            os.writeObject(output);
+                            os.flush();
+                        }
+                        os.writeObject("over");
+                        os.flush();
+
+                        /*
                         os.writeObject("attr#attr2#");
                         os.flush();
                         os.writeObject("val1#val2#");
@@ -748,6 +769,7 @@ public class Main {
                         os.flush();
                         os.writeObject("over");
                         os.flush();
+                         */
 
                         break;
                 }
@@ -759,8 +781,93 @@ public class Main {
         ss.close();
     }
 
+    // convert FindIterable to ArrayList
+    public static ArrayList<Document> iterableToList(FindIterable<Document> iterable) {
+        ArrayList<Document> result = new ArrayList<>();
+
+        for (Document doc : iterable) {
+            result.add(doc);
+        }
+
+        return result;
+    }
+
+    // projection operator
+    // returns ArrayList of Strings to be sent for client
+    public static ArrayList<String> projection(Selection selection, ArrayList<Document> docs, DataBases databases) {
+        ArrayList<String> result = new ArrayList<>();
+
+        // add first row to result, row of attribute names
+        String row = "";
+        for (TableAttribute attr : selection.getAttributes()) {
+            row += attr.getTableName() + " " + attr.getAttributeName() + "#";
+        }
+        result.add(row);
+
+        // get tables of the selection attributes
+        ArrayList<Table> tables = new ArrayList<>();
+        for (TableAttribute attr : selection.getAttributes()) {
+            tables.add(findTable(databases, selection.getDatabase(), attr.getTableName()));
+        }
+
+        // check if there is index on every attribute
+        boolean eachHasIndex = true;
+        ArrayList<String> indexFiles = new ArrayList<>();
+        int i = 0;
+        for (TableAttribute attr : selection.getAttributes()) {
+            IndexFile indexFile = findIndexOnAttribute(tables.get(i), attr.getAttributeName());
+            i++;
+            if (indexFile == null) {
+                eachHasIndex = false;
+                break;
+            } else {
+                indexFiles.add(indexFile.getIndexName());
+            }
+        }
+
+        if (eachHasIndex) {
+            // do something ..
+
+        } else {
+            // get dollection indeces of variables
+            int[] indeces = new int[tables.size()];
+            i = 0;
+            for (TableAttribute attr : selection.getAttributes()) {
+                indeces[i] = (getValueIndex(tables.get(i), attr.getAttributeName()));
+                i++;
+            }
+
+            // insert strings into output
+            for (Document doc : docs) {
+                row = "";
+                for (int j = 0; j < tables.size(); j++) {
+                    if (indeces[j] == -1) {
+                        row += (String) doc.get("_id");
+                    } else {
+                        String attrs = (String) doc.get("attrs");
+                        row += attrs.split("#", -1)[indeces[j]];
+                    }
+                    row += "#";
+                }
+                result.add(row);
+            }
+        }
+
+        return result;
+    }
+
+    // check if there is index file for an attribute in a table
+    public static IndexFile findIndexOnAttribute(Table table, String attribute) {
+        for (IndexFile index : table.getIndexFiles()) {
+            if (index.getAttribute().equals(attribute)) {
+                return index;
+            }
+        }
+        return null;
+    }
+
     // returns Table from database list
-    public Table findTable(DataBases databases, String databaseName, String tableName) {
+    public static Table findTable(DataBases databases, String databaseName, String tableName) {
         for (Database db : databases.Databases) {
             if (db.getDataBaseName().equals(databaseName)) {
                 for (Table t : db.getTables()) {
@@ -775,6 +882,11 @@ public class Main {
 
     // get index of a value in attrs field of collection
     public static int getValueIndex(Table table, String attributeName) {
+        // if pk return -1
+        if (table.getpKAttrName().equals(attributeName)) {
+            return -1;
+        }
+
         ArrayList<Attribute> attrList = table.getAttributes();
         int i = 0;
         boolean pkFound = false;
