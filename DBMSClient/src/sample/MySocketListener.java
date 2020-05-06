@@ -19,10 +19,30 @@ public class MySocketListener implements Runnable {
 
     @Override
     public void run() {
+        boolean first = true;
+        boolean over = false;
         while(true) {
             try {
                 Object obj = is.readObject();
                 if(obj instanceof String) {
+                    String read = (String) obj;
+                    if (read.equals("over")) {
+                        over = true;
+                    }
+                    if (!over && first) {
+                        String[] list = read.split("#", -1);
+                        for (int i = 0; i < list.length - 1; ++i) {
+                            controller.addOutputColumn(list[i], i);
+                        }
+                        controller.showOutputPane();
+                        first = false;
+                    } else if (!over) {
+                        controller.addOutputRow(read);
+                    }
+                    else {
+                        first = true;
+                        over = false;
+                    }
                     System.out.println((String) obj);
                 }
                 else if(obj instanceof List) {

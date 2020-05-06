@@ -15,6 +15,7 @@ import javafx.scene.layout.Pane;
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -236,10 +237,10 @@ public class Controller {
     private ObservableList<String> selectedRow = FXCollections.observableArrayList();
 
     private List<Database> databases;
-    private String[] attrTypes = {"int", "char", "varchar", "date"};
-    private String[] operatorTypes = {"=", "!=", "<", ">", "<=", ">="};
-    private String[] uniqueList = {"unique", "not unique"};
-    private String[] functionList = {"count", "max"};
+    private final String[] attrTypes = {"int", "char", "varchar", "date"};
+    private final String[] operatorTypes = {"=", "!=", "<", ">", "<=", ">="};
+    private final String[] uniqueList = {"unique", "not unique"};
+    private final String[] functionList = {"count", "max"};
     public void initialize() throws Exception{
         // establish connection with server
         Socket socket = new Socket("localhost", 54321);
@@ -1275,6 +1276,7 @@ public class Controller {
             }
         });
 
+        selOutputCancelButton.setOnAction(e -> selOutputPane.setVisible(false));
     }
 
 
@@ -1350,5 +1352,25 @@ public class Controller {
 
     public void setDatabases(List<Database> list) {
         this.databases = list;
+    }
+
+    public void addOutputColumn(String string, int i) {
+        final TableColumn<ObservableList<String>, String> column1 = new TableColumn<>(string);
+        column1.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().get(i)));
+        selOutputTableView.getColumns().add(column1);
+    }
+
+    public void addOutputRow(String value) {
+        ObservableList<String> row = FXCollections.observableArrayList();
+
+        String[] list = value.split("#", -1);
+        row.addAll(Arrays.asList(list).subList(0, list.length - 1));
+
+        selOutputTableView.getItems().add(row);
+    }
+
+    public void showOutputPane() {
+        hidePanes();
+        selOutputPane.setVisible(true);
     }
 }

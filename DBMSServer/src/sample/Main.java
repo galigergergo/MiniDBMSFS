@@ -735,6 +735,22 @@ public class Main {
                         os.writeObject(result);
                         os.flush();
                         break;
+                    case "select":
+                        Selection selection = (Selection) is.readObject();
+                        System.out.println(selection.getDatabase());
+
+                        // select
+
+                        os.writeObject("#attr#attr2#");
+                        os.flush();
+                        os.writeObject("#val1#val2#");
+                        os.flush();
+                        os.writeObject("#val3#val4#");
+                        os.flush();
+                        os.writeObject("over");
+                        os.flush();
+
+                        break;
                 }
             }
         }
@@ -786,7 +802,7 @@ public class Main {
         // if PK
         if (table.getpKAttrName().equals(condition.getAttribute())) {
             FindIterable<Document> result = null;
-            switch (condition.getOperator()){
+            switch (condition.getOperator()) {
                 case "=":
                     result = collection.find(Filters.eq("_id", condition.getValue()));
                     break;
