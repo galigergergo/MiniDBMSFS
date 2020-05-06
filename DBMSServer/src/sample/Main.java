@@ -8,7 +8,6 @@ import com.mongodb.client.model.Filters;
 import data.*;
 import org.bson.Document;
 
-import javax.print.Doc;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
@@ -741,11 +740,11 @@ public class Main {
 
                         // select
 
-                        os.writeObject("#attr#attr2#");
+                        os.writeObject("attr#attr2#");
                         os.flush();
-                        os.writeObject("#val1#val2#");
+                        os.writeObject("val1#val2#");
                         os.flush();
-                        os.writeObject("#val3#val4#");
+                        os.writeObject("val3#val4#");
                         os.flush();
                         os.writeObject("over");
                         os.flush();

@@ -1,6 +1,7 @@
 package sample;
 
 import data.*;
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
@@ -1276,7 +1277,10 @@ public class Controller {
             }
         });
 
-        selOutputCancelButton.setOnAction(e -> selOutputPane.setVisible(false));
+        selOutputCancelButton.setOnAction(e -> {
+            selOutputPane.getChildren().clear();
+            selOutputPane.setVisible(false);
+        });
     }
 
 
@@ -1352,6 +1356,13 @@ public class Controller {
 
     public void setDatabases(List<Database> list) {
         this.databases = list;
+    }
+
+    public void initOutput(String[] list) {
+        for (int i = 0; i < list.length - 1; ++i) {
+            addOutputColumn(list[i], i);
+        }
+        showOutputPane();
     }
 
     public void addOutputColumn(String string, int i) {

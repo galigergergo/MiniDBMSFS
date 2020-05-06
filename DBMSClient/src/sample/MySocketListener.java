@@ -1,6 +1,7 @@
 package sample;
 
 import data.Database;
+import javafx.application.Platform;
 
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
@@ -22,39 +23,37 @@ public class MySocketListener implements Runnable {
         boolean first = true;
         boolean over = false;
         while(true) {
+            Object obj;
             try {
-                Object obj = is.readObject();
-                if(obj instanceof String) {
-                    String read = (String) obj;
-                    if (read.equals("over")) {
-                        over = true;
-                    }
-                    if (!over && first) {
-                        String[] list = read.split("#", -1);
-                        for (int i = 0; i < list.length - 1; ++i) {
-                            controller.addOutputColumn(list[i], i);
-                        }
-                        controller.showOutputPane();
-                        first = false;
-                    } else if (!over) {
-                        controller.addOutputRow(read);
-                    }
-                    else {
-                        first = true;
-                        over = false;
-                    }
-                    System.out.println((String) obj);
-                }
-                else if(obj instanceof List) {
-                    databases = (List<Database>) obj;
-                    System.out.println("received");
-                    System.out.println(databases);
-                    controller.setDatabases(databases);
-                    //databases.clear();
-                }
+                obj = is.readObject();
             } catch (Exception ex) {
                 System.out.println(ex);
                 break;
+            }
+            if(obj instanceof String) {
+                String read = (String) obj;
+                if (read.equals("over")) {
+                    over = true;
+                }
+                if (!over && first) {
+                    String[] list = read.split("#", -1);
+                    controller.initOutput(list);
+                    first = false;
+                } else if (!over) {
+                    controller.addOutputRow(read);
+                }
+                else {
+                    first = true;
+                    over = false;
+                }
+                System.out.println((String) obj);
+            }
+            else if(obj instanceof List) {
+                databases = (List<Database>) obj;
+                System.out.println("received");
+                System.out.println(databases);
+                controller.setDatabases(databases);
+                //databases.clear();
             }
         }
     }
