@@ -773,7 +773,7 @@ public class Main {
                         ArrayList<Document> selectedDocs = findElementsOnWhere(T, mongoCollection, selection.getConditions(), mongoDatabase);
 
                         // projection
-                        ArrayList<String> toSend = new ArrayList<>();
+                        ArrayList<String> toSend;
                         if (eachHasIndex(databases, selection)) {
                             toSend = indexProjection(selection, selectedDocs, databases);
                         } else {
