@@ -1,11 +1,13 @@
 package sample;
 
-import com.mongodb.client.*;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import data.*;
 import org.bson.Document;
 
-import javax.print.Doc;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
@@ -770,22 +772,32 @@ public class Main {
                         mongoDatabase = mongoClients.getDatabase(selection.getDatabase());
                         mongoCollection = mongoDatabase.getCollection(T.getTableName());
 
+                        System.out.println("before selection");
+
                         // szelekcio, metszet, rendezes, duplikatumoktol megszabadulas -> selectedDocs
                         ArrayList<Document> selectedDocs = findElementsOnWhere(T, mongoCollection, selection.getConditions(), mongoDatabase);
+
+                        System.out.println("after selection");
 
                         // projection
                         ArrayList<String> toSend;
                         if (eachHasIndex(databases, selection)) {
-                            toSend = indexProjection(selection, selectedDocs, databases);
+                            toSend = projection(selection, selectedDocs, databases);
+//                            toSend = indexProjection(selection, selectedDocs, databases);
                         } else {
                             toSend = projection(selection, selectedDocs, databases);
                         }
+
+                        System.out.println("after projection");
 
                         // send data
                         for (String output : toSend) {
                             os.writeObject(output);
                             os.flush();
                         }
+
+                        System.out.println("over");
+
                         os.writeObject("over");
                         os.flush();
 
@@ -846,14 +858,15 @@ public class Main {
     // projection operator
     // returns ArrayList of Strings to be sent for client
     public static ArrayList<String> projection(Selection selection, ArrayList<Document> docs, DataBases databases) {
-        ArrayList<String> result = new ArrayList<>();
+        // using SET so no duplicates allowed. at end, will be converted to ArrayList
+        Set<String> result = new HashSet<>();
 
         // add first row to result, row of attribute names
-        StringBuilder row = new StringBuilder();
+        // only add it afterwards, so it wont get to the bottom in the set
+        StringBuilder firstRow = new StringBuilder();
         for (TableAttribute attr : selection.getAttributes()) {
-            row.append(attr.getTableName()).append(" ").append(attr.getAttributeName()).append("#");
+            firstRow.append(attr.getTableName()).append(" ").append(attr.getAttributeName()).append("#");
         }
-        result.add(row.toString());
 
         // get tables of the selection attributes
         ArrayList<Table> tables = new ArrayList<>();
@@ -869,6 +882,7 @@ public class Main {
             i++;
         }
 
+        StringBuilder row;
         // insert strings into output
         for (Document doc : docs) {
             row = new StringBuilder();
@@ -884,7 +898,10 @@ public class Main {
             result.add(row.toString());
         }
 
-        return result;
+        ArrayList<String> list = new ArrayList<>();
+        list.add(firstRow.toString());
+        list.addAll(result);
+        return list;
     }
 
     // projection operator if there is index for all the attributes
@@ -905,7 +922,7 @@ public class Main {
             tables.add(findTable(databases, selection.getDatabase(), attr.getTableName()));
         }
 
-
+        // TODO indexprojection if eachhasindex
 
         return result;
     }
@@ -1062,7 +1079,17 @@ public class Main {
         // At the end, it converts to ArrayList<>
 
         int condLen = conditions.size();
-        boolean[] condIndexPK = new boolean[condLen];
+        int done = condLen;
+
+        if (condLen == 0) {
+            TableAttribute ta = new TableAttribute(table.getTableName(), table.getpKAttrName());
+            WhereCondition ww = new WhereCondition(ta, ">=", "");
+            conditions.add(ww);
+            condLen++;
+        }
+
+        // if condition[i] has index built on it or is PK
+        boolean[] condIndex = new boolean[condLen];
         Set<Document> set;
         // container of sets made by conditions. at the end we intersect these
         ArrayList<Set<Document>> sets = new ArrayList<>(condLen);
@@ -1070,6 +1097,9 @@ public class Main {
         int j = -1;
         // iterate through whereConditions
         // check for PKs and INDEXes
+
+        System.out.println("SEL before PK and INDEX");
+
         for (WhereCondition condition : conditions) {
             set = new HashSet<>();
             j++;
@@ -1078,7 +1108,11 @@ public class Main {
             if (condition.getAttribute().getTableName().equals(table.getTableName())) {
                 // if PK
                 if (table.getpKAttrName().equals(condition.getAttribute().getAttributeName())) {
-                    condIndexPK[j] = true;
+
+                    System.out.println("SEL PK");
+
+                    condIndex[j] = true;
+                    done--;
                     FindIterable<Document> result = null;
                     switch (condition.getOperator()) {
                         case "=":
@@ -1100,15 +1134,23 @@ public class Main {
                             result = collection.find(Filters.gt("_id", condition.getValue()));
                             break;
                     }
+
+                    System.out.println("SEL before adding to set");
+
                     if (result != null) {
                         for (Document doc : result) {
                             set.add(doc);
                         }
                     }
+
+                    System.out.println("SEL added to set");
+
                 } else {
                     // if HAS INDEX on it
                     IndexFile index = findIndexOnAttribute(table, condition.getAttribute().getAttributeName());
                     if (index != null) {
+                        condIndex[j] = true;
+                        done--;
                         // index table
                         MongoCollection<Document> indexCollection = mongoDb.getCollection(index.getIndexName());
                         FindIterable<Document> result = null;
@@ -1136,19 +1178,15 @@ public class Main {
                             for (Document doc : result) {
                                 // find docs in main Table with ids from indexfile
                                 // split it by #
-                                Document indDoc = collection.find().first();
-                                if (indDoc != null) {
-                                    System.out.println("_id in index=" + doc.get("_id"));
-                                    System.out.println("main_id in index=" + doc.get("main_id"));
-                                    String[] main_id = ((String) doc.get("main_id")).split("#", -1);
-                                    // require it's doc from main table, by the main_id
-                                    for (String id : main_id) {
-                                        Document docx = collection.find(new Document("_id", id)).first();
-                                        if (docx != null) {
-                                            set.add(docx);
-                                        }
+                                String[] main_id = ((String) doc.get("main_id")).split("#", -1);
+                                // require it's doc from main table, by the main_id
+                                for (String id : main_id) {
+                                    Document docx = collection.find(new Document("_id", id)).first();
+                                    if (docx != null) {
+                                        set.add(docx);
                                     }
                                 }
+
                             }
                         }
                     }
@@ -1158,71 +1196,79 @@ public class Main {
         }
 
         // manually add docs if are good for us
-        FindIterable<Document> docs = collection.find();
-        for (Document iterator : docs) {
-            String attributes = (String) iterator.get("attrs");
-            String[] values = attributes.split("#", -1);
+        if (done > 0) {
+            FindIterable<Document> docs = collection.find();
+            System.out.println("SEL before MANUAL");
+            for (Document iterator : docs) {
+                String attributes = (String) iterator.get("attrs");
+                String[] values = attributes.split("#", -1);
 
-            j = -1;
-            for (WhereCondition condition : conditions) {
-                j++;
-                set = new HashSet<>(sets.get(j));
-                // if whereCond.Table == our table
-                if (condition.getAttribute().getTableName().equals(table.getTableName())) {
-                    // if not PK
-                    if (!condIndexPK[j]) {
-                        // get index of the value in condition
-                        int i = getValueIndex(table, condition.getAttribute().getAttributeName());
+                j = -1;
+                for (WhereCondition condition : conditions) {
+                    j++;
+                    set = new HashSet<>(sets.get(j));
+                    // if whereCond.Table == our table
+                    if (condition.getAttribute().getTableName().equals(table.getTableName())) {
+                        // if not PK
+                        if (!condIndex[j]) {
+                            // get index of the value in condition
+                            int i = getValueIndex(table, condition.getAttribute().getAttributeName());
 
-                        int num;
-                        int condNum;
-                        switch (condition.getOperator()) {
-                            case "=":
-                                if (values[i].equals(condition.getValue())) {
-                                    set.add(iterator);
-                                }
-                                break;
-                            case "!=":
-                                if (!values[i].equals(condition.getValue())) {
-                                    set.add(iterator);
-                                }
-                                break;
-                            case "<=":
-                                num = Integer.parseInt(values[i]);
-                                condNum = Integer.parseInt(condition.getValue());
-                                if (num <= condNum) {
-                                    set.add(iterator);
-                                }
-                                break;
-                            case "<":
-                                num = Integer.parseInt(values[i]);
-                                condNum = Integer.parseInt(condition.getValue());
-                                if (num < condNum) {
-                                    set.add(iterator);
-                                }
-                                break;
-                            case ">=":
-                                num = Integer.parseInt(values[i]);
-                                condNum = Integer.parseInt(condition.getValue());
-                                if (num >= condNum) {
-                                    set.add(iterator);
-                                }
-                                break;
-                            case ">":
-                                num = Integer.parseInt(values[i]);
-                                condNum = Integer.parseInt(condition.getValue());
-                                if (num > condNum) {
-                                    set.add(iterator);
-                                }
-                                break;
+                            int num;
+                            int condNum;
+                            switch (condition.getOperator()) {
+                                case "=":
+                                    if (values[i].equals(condition.getValue())) {
+                                        set.add(iterator);
+                                    }
+                                    break;
+                                case "!=":
+                                    if (!values[i].equals(condition.getValue())) {
+                                        set.add(iterator);
+                                    }
+                                    break;
+                                case "<=":
+                                    num = Integer.parseInt(values[i]);
+                                    condNum = Integer.parseInt(condition.getValue());
+                                    if (num <= condNum) {
+                                        set.add(iterator);
+                                    }
+                                    break;
+                                case "<":
+                                    num = Integer.parseInt(values[i]);
+                                    condNum = Integer.parseInt(condition.getValue());
+                                    if (num < condNum) {
+                                        set.add(iterator);
+                                    }
+                                    break;
+                                case ">=":
+                                    num = Integer.parseInt(values[i]);
+                                    condNum = Integer.parseInt(condition.getValue());
+                                    if (num >= condNum) {
+                                        set.add(iterator);
+                                    }
+                                    break;
+                                case ">":
+                                    num = Integer.parseInt(values[i]);
+                                    condNum = Integer.parseInt(condition.getValue());
+                                    if (num > condNum) {
+                                        set.add(iterator);
+                                    }
+                                    break;
+                            }
+                            sets.set(j, set);
                         }
-                        sets.set(j, set);
                     }
                 }
             }
         }
 
+        System.out.println("SEL after MANUAL");
+
         set = new HashSet<>(sets.get(0));
+
+        System.out.println("SEL after new hashset");
+
         for (j = 1; j < sets.size(); j++) {
             set = intersect(set, sets.get(j));
         }
