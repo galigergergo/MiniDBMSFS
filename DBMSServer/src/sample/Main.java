@@ -11,6 +11,7 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -489,8 +490,7 @@ public class Main {
                                                         if (!found) {
                                                             Document entry;
 
-                                                            // TODO
-                                                            // correct every insert and find, so it would work on int _ids
+                                                            // TODO correct every insert and find, so it would work on int _ids
 //                                                            // check if INT
 //                                                            try {
 //                                                                int intVal = Integer.parseInt(val[i]);
@@ -850,7 +850,7 @@ public class Main {
 
         if (eachHasIndex) {
             // do something ..
-            // TODO
+            // TODO projection if eachHasIndex
 
 
         } else {
@@ -1031,14 +1031,18 @@ public class Main {
     public static ArrayList<Document> findElementsOnWhere(Table table, MongoCollection<Document> collection, ArrayList<WhereCondition> conditions, MongoDatabase mongoDb) {
         // Stores in a Set so no duplicates will be present.
         // At the end, it converts to ArrayList<>
-        Set<Document> set = new HashSet<>();
-// TODO METSZES, mert most egyeszites van
-        boolean[] condIndexPK = new boolean[conditions.size()];
+
+        int condLen = conditions.size();
+        boolean[] condIndexPK = new boolean[condLen];
+        Set<Document> set;
+        // container of sets made by conditions. at the end we intersect these
+        ArrayList<Set<Document>> sets = new ArrayList<>(condLen);
 
         int j = -1;
         // iterate through whereConditions
         // check for PKs and INDEXes
         for (WhereCondition condition : conditions) {
+            set = new HashSet<>();
             j++;
             // if whereCond.Table == our table
             // if not, then, boy'oh'boy. this function isn't what you should've called
@@ -1105,7 +1109,9 @@ public class Main {
                                 // split it by #
                                 Document indDoc = collection.find().first();
                                 if (indDoc != null) {
-                                    String[] main_id = ((String) indDoc.get("main_id")).split("#", -1);
+                                    System.out.println("_id in index=" + doc.get("_id"));
+                                    System.out.println("main_id in index=" + doc.get("main_id"));
+                                    String[] main_id = ((String) doc.get("main_id")).split("#", -1);
                                     // require it's doc from main table, by the main_id
                                     for (String id : main_id) {
                                         Document docx = collection.find(new Document("_id", id)).first();
@@ -1118,6 +1124,7 @@ public class Main {
                         }
                     }
                 }
+                sets.add(set);
             }
         }
 
@@ -1130,6 +1137,7 @@ public class Main {
             j = -1;
             for (WhereCondition condition : conditions) {
                 j++;
+                set = new HashSet<>(sets.get(j));
                 // if whereCond.Table == our table
                 if (condition.getAttribute().getTableName().equals(table.getTableName())) {
                     // if not PK
@@ -1179,9 +1187,15 @@ public class Main {
                                 }
                                 break;
                         }
+                        sets.set(j, set);
                     }
                 }
             }
+        }
+
+        set = new HashSet<>(sets.get(0));
+        for (j = 1; j < sets.size(); j++) {
+            set = intersect(set, sets.get(j));
         }
 
         if (set.size() == 0) {
@@ -1189,5 +1203,25 @@ public class Main {
         }
 
         return new ArrayList<>(set);
+    }
+
+    // returns the intersection as a SET, ie METSZES, of two Collections, eg Sets or ArrayLists
+    public static Set<Document> intersect(Collection<Document> set1, Collection<Document> set2) {
+        Collection<Document> a;
+        Collection<Document> b;
+        Set<Document> res = new HashSet<>();
+        if (set1.size() <= set2.size()) {
+            a = set1;
+            b = set2;
+        } else {
+            a = set2;
+            b = set1;
+        }
+        for (Document e : a) {
+            if (b.contains(e)) {
+                res.add(e);
+            }
+        }
+        return res;
     }
 }
