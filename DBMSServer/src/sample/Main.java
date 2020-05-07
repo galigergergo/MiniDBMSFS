@@ -773,7 +773,12 @@ public class Main {
                         ArrayList<Document> selectedDocs = findElementsOnWhere(T, mongoCollection, selection.getConditions(), mongoDatabase);
 
                         // projection
-                        ArrayList<String> toSend = projection(selection, selectedDocs, databases);
+                        ArrayList<String> toSend = new ArrayList<>();
+                        if (eachHasIndex(databases, selection)) {
+                            toSend = indexProjection(selection, selectedDocs, databases);
+                        } else {
+                            toSend = projection(selection, selectedDocs, databases);
+                        }
 
                         // send data
                         for (String output : toSend) {
@@ -802,6 +807,28 @@ public class Main {
         os.close();
         s.close();
         ss.close();
+    }
+
+    // check if there is index on every attribute
+    public static boolean eachHasIndex(DataBases databases, Selection selection) {
+        // get tables of the selection attributes
+        ArrayList<Table> tables = new ArrayList<>();
+        for (TableAttribute attr : selection.getAttributes()) {
+            tables.add(findTable(databases, selection.getDatabase(), attr.getTableName()));
+        }
+
+        ArrayList<String> indexFiles = new ArrayList<>();
+        int i = 0;
+        for (TableAttribute attr : selection.getAttributes()) {
+            IndexFile indexFile = findIndexOnAttribute(tables.get(i), attr.getAttributeName());
+            i++;
+            if (indexFile == null) {
+                return false;
+            } else {
+                indexFiles.add(indexFile.getIndexName());
+            }
+        }
+        return true;
     }
 
     // convert FindIterable to ArrayList
@@ -833,50 +860,51 @@ public class Main {
             tables.add(findTable(databases, selection.getDatabase(), attr.getTableName()));
         }
 
-        // check if there is index on every attribute
-        boolean eachHasIndex = true;
-        ArrayList<String> indexFiles = new ArrayList<>();
+        // get collection indeces of variables
+        int[] indeces = new int[tables.size()];
         int i = 0;
         for (TableAttribute attr : selection.getAttributes()) {
-            IndexFile indexFile = findIndexOnAttribute(tables.get(i), attr.getAttributeName());
+            indeces[i] = getValueIndex(tables.get(i), attr.getAttributeName());
             i++;
-            if (indexFile == null) {
-                eachHasIndex = false;
-                break;
-            } else {
-                indexFiles.add(indexFile.getIndexName());
-            }
         }
 
-        if (eachHasIndex) {
-            // do something ..
-            // TODO
-
-
-        } else {
-            // get collection indeces of variables
-            int[] indeces = new int[tables.size()];
-            i = 0;
-            for (TableAttribute attr : selection.getAttributes()) {
-                indeces[i] = getValueIndex(tables.get(i), attr.getAttributeName());
-                i++;
-            }
-
-            // insert strings into output
-            for (Document doc : docs) {
-                row = new StringBuilder();
-                for (int j = 0; j < tables.size(); j++) {
-                    if (indeces[j] == -1) {
-                        row.append((String) doc.get("_id"));
-                    } else {
-                        String attrs = (String) doc.get("attrs");
-                        row.append(attrs.split("#", -1)[indeces[j]]);
-                    }
-                    row.append("#");
+        // insert strings into output
+        for (Document doc : docs) {
+            row = new StringBuilder();
+            for (int j = 0; j < tables.size(); j++) {
+                if (indeces[j] == -1) {
+                    row.append((String) doc.get("_id"));
+                } else {
+                    String attrs = (String) doc.get("attrs");
+                    row.append(attrs.split("#", -1)[indeces[j]]);
                 }
-                result.add(row.toString());
+                row.append("#");
             }
+            result.add(row.toString());
         }
+
+        return result;
+    }
+
+    // projection operator if there is index for all the attributes
+    // returns ArrayList of Strings to be sent for client
+    public static ArrayList<String> indexProjection(Selection selection, ArrayList<Document> docs, DataBases databases) {
+        ArrayList<String> result = new ArrayList<>();
+
+        // add first row to result, row of attribute names
+        StringBuilder row = new StringBuilder();
+        for (TableAttribute attr : selection.getAttributes()) {
+            row.append(attr.getTableName()).append(" ").append(attr.getAttributeName()).append("#");
+        }
+        result.add(row.toString());
+
+        // get tables of the selection attributes
+        ArrayList<Table> tables = new ArrayList<>();
+        for (TableAttribute attr : selection.getAttributes()) {
+            tables.add(findTable(databases, selection.getDatabase(), attr.getTableName()));
+        }
+
+
 
         return result;
     }
