@@ -26,7 +26,7 @@ public class Selection implements Serializable {
         conditions.clear();
     }
 
-    public void addJoin(Table table, String attr1, String attr2) {
+    public void addJoin(Table table, TableAttribute attr1, String attr2) {
         joins.add(new Join(table, attr1, attr2));
     }
 

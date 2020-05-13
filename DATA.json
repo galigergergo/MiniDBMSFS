@@ -50,40 +50,6 @@
           ]
         },
         {
-          "tableName": "Animals",
-          "fileName": "afilename",
-          "rowLength": 123,
-          "attributes": [
-            {
-              "attributeName": "ID",
-              "type": "int",
-              "length": 0,
-              "isUnique": true
-            },
-            {
-              "attributeName": "Name",
-              "type": "varchar",
-              "length": 20,
-              "isUnique": false
-            },
-            {
-              "attributeName": "Age",
-              "type": "int",
-              "length": 0,
-              "isUnique": false
-            }
-          ],
-          "pKAttrName": "ID",
-          "foreignKeys": [],
-          "indexFiles": [
-            {
-              "indexName": "IDIndex",
-              "isUnique": false,
-              "attribute": "ID"
-            }
-          ]
-        },
-        {
           "tableName": "Persons",
           "fileName": "afilename",
           "rowLength": 123,
@@ -181,6 +147,79 @@
               "indexName": "NoIDFK_NoId_Index",
               "isUnique": false,
               "attribute": "NoId"
+            }
+          ]
+        },
+        {
+          "tableName": "Colors",
+          "fileName": "afilename",
+          "rowLength": 123,
+          "attributes": [
+            {
+              "attributeName": "ID",
+              "type": "int",
+              "length": 0,
+              "isUnique": true
+            },
+            {
+              "attributeName": "Code",
+              "type": "varchar",
+              "length": 6,
+              "isUnique": false
+            }
+          ],
+          "pKAttrName": "ID",
+          "foreignKeys": [],
+          "indexFiles": [
+            {
+              "indexName": "IDIndex",
+              "isUnique": false,
+              "attribute": "ID"
+            }
+          ]
+        },
+        {
+          "tableName": "Animals",
+          "fileName": "afilename",
+          "rowLength": 123,
+          "attributes": [
+            {
+              "attributeName": "ID",
+              "type": "int",
+              "length": 0,
+              "isUnique": true
+            },
+            {
+              "attributeName": "Name",
+              "type": "varchar",
+              "length": 20,
+              "isUnique": false
+            },
+            {
+              "attributeName": "Age",
+              "type": "int",
+              "length": 0,
+              "isUnique": false
+            },
+            {
+              "attributeName": "ColorID",
+              "type": "int",
+              "length": 0,
+              "isUnique": false
+            }
+          ],
+          "pKAttrName": "ID",
+          "foreignKeys": [],
+          "indexFiles": [
+            {
+              "indexName": "IDIndex",
+              "isUnique": false,
+              "attribute": "ID"
+            },
+            {
+              "indexName": "AnimalsAgeIndex",
+              "isUnique": false,
+              "attribute": "Age"
             }
           ]
         }

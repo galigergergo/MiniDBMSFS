@@ -4,10 +4,10 @@ import java.io.Serializable;
 
 public class Join implements Serializable {
     private Table table;
-    private String attribute1;
+    private TableAttribute attribute1;
     private String attribute2;
 
-    public Join(Table table, String attribute1, String attribute2) {
+    public Join(Table table, TableAttribute attribute1, String attribute2) {
         this.table = table;
         this.attribute1 = attribute1;
         this.attribute2 = attribute2;
@@ -21,11 +21,11 @@ public class Join implements Serializable {
         this.table = table;
     }
 
-    public String getAttribute1() {
+    public TableAttribute getAttribute1() {
         return attribute1;
     }
 
-    public void setAttribute1(String attribute1) {
+    public void setAttribute1(TableAttribute attribute1) {
         this.attribute1 = attribute1;
     }
 

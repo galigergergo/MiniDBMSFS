@@ -7,9 +7,13 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import data.*;
 import org.bson.Document;
+import org.w3c.dom.Attr;
 
+import javax.print.Doc;
+import java.awt.image.AreaAveragingScaleFilter;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.lang.reflect.Array;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -768,24 +772,73 @@ public class Main {
                         System.out.println(selection.getDatabase());
 
                         T = selection.getTable();
+                        ArrayList<Join> joins = selection.getJoins();
 
                         mongoDatabase = mongoClients.getDatabase(selection.getDatabase());
                         mongoCollection = mongoDatabase.getCollection(T.getTableName());
 
-                        System.out.println("before selection");
-
-                        // szelekcio, metszet, rendezes, duplikatumoktol megszabadulas -> selectedDocs
-                        ArrayList<Document> selectedDocs = findElementsOnWhere(T, mongoCollection, selection.getConditions(), mongoDatabase);
-
-                        System.out.println("after selection");
-
-                        // projection
                         ArrayList<String> toSend;
-                        if (eachHasIndex(databases, selection)) {
-                            toSend = projection(selection, selectedDocs, databases);
-//                            toSend = indexProjection(selection, selectedDocs, databases);
+                        // if joins required
+                        if (selection.getJoins().size() > 0) {
+                            // get structure of table attributes
+                            ArrayList<TableAttribute> tableStructure = new ArrayList();
+                            for (Attribute a : T.getAttributes()) {
+                                if (!a.getAttributeName().equals(T.getpKAttrName())) {
+                                    tableStructure.add(new TableAttribute(T.getTableName(), a.getAttributeName()));
+                                }
+                            }
+
+                            // get conditions for first table
+                            ArrayList<WhereCondition> firstConds = new ArrayList();
+                            for (WhereCondition cond : selection.getConditions()) {
+                                if (cond.getAttribute().getTableName().equals(T.getTableName())) {
+                                    firstConds.add(cond);
+                                }
+                            }
+
+                            // selection on first table on its conditions
+                            ArrayList<Document> selectedDocs = findElementsOnWhere(T, mongoCollection, firstConds, mongoDatabase);
+
+                            // join and selection
+                            ArrayList<Document> joined = indexedNestedJoin(mongoDatabase, selectedDocs, tableStructure, selection);
+
+                            for (Document doc : joined) {
+                                System.out.println((String) doc.get("attrs"));
+                            }
+
+                            // update table structure
+                            ArrayList<TableAttribute> tableStructurePro = new ArrayList();
+                            for (Attribute a : T.getAttributes()) {
+                                tableStructurePro.add(new TableAttribute(T.getTableName(), a.getAttributeName()));
+                            }
+                            for (Join j : joins) {
+                                for (Attribute a : j.getTable().getAttributes()) {
+                                    tableStructurePro.add(new TableAttribute(j.getTable().getTableName(), a.getAttributeName()));
+                                }
+                            }
+
+                            // projection
+                            toSend = projectionJoin(selection, joined, tableStructurePro, databases);
+                            System.out.println("Join toSend ready to be sent");
+                            for (String st : toSend) {
+                                System.out.println(st);
+                            }
+
                         } else {
-                            toSend = projection(selection, selectedDocs, databases);
+                            System.out.println("before selection");
+
+                            // szelekcio, metszet, rendezes, duplikatumoktol megszabadulas -> selectedDocs
+                            ArrayList<Document> selectedDocs = findElementsOnWhere(T, mongoCollection, selection.getConditions(), mongoDatabase);
+
+                            System.out.println("after selection");
+
+                            // projection
+                            if (eachHasIndex(databases, selection)) {
+                                toSend = projection(selection, selectedDocs, databases);
+//                            toSend = indexProjection(selection, selectedDocs, databases);
+                            } else {
+                                toSend = projection(selection, selectedDocs, databases);
+                            }
                         }
 
                         System.out.println("after projection");
@@ -795,6 +848,7 @@ public class Main {
                             os.writeObject(output);
                             os.flush();
                         }
+
 
                         System.out.println("over");
 
@@ -904,6 +958,48 @@ public class Main {
         return list;
     }
 
+    // projection operator for joined bigger tables
+    public static ArrayList<String> projectionJoin(Selection selection, ArrayList<Document> docs, ArrayList<TableAttribute> tableStructure, DataBases databases) {
+        // using SET so no duplicates allowed. at end, will be converted to ArrayList
+        Set<String> result = new HashSet<>();
+
+        // add first row to result, row of attribute names
+        // only add it afterwards, so it wont get to the bottom in the set
+        StringBuilder firstRow = new StringBuilder();
+        for (TableAttribute attr : selection.getAttributes()) {
+            firstRow.append(attr.getTableName()).append(" ").append(attr.getAttributeName()).append("#");
+        }
+
+        // get collection indeces of variables
+        int[] indeces = new int[selection.getAttributes().size()];
+        int i = 0;
+        for (TableAttribute attr : selection.getAttributes()) {
+            indeces[i] = getValueIndexStructure(tableStructure, attr.getAttributeName(), attr.getTableName());
+            i++;
+        }
+
+        StringBuilder row;
+        // insert strings into output
+        for (Document doc : docs) {
+            row = new StringBuilder();
+            for (int index : indeces) {
+                if (index == -1) {
+                    row.append((String) doc.get("_id"));
+                } else {
+                    String attrs = (String) doc.get("attrs");
+                    row.append(attrs.split("#", -1)[index]);
+                }
+                row.append("#");
+            }
+            result.add(row.toString());
+        }
+
+        ArrayList<String> list = new ArrayList<>();
+        list.add(firstRow.toString());
+        list.addAll(result);
+        return list;
+    }
+
     // projection operator if there is index for all the attributes
     // returns ArrayList of Strings to be sent for client
     public static ArrayList<String> indexProjection(Selection selection, ArrayList<Document> docs, DataBases databases) {
@@ -976,6 +1072,20 @@ public class Main {
             i--;        // pk not in the attrs field
         }
         return i;
+    }
+
+    // get index of a value in attrs field of collection
+    public static int getValueIndexStructure(ArrayList<TableAttribute> tableStructure, String attributeName, String tableName) {
+        int i = 0;
+        while (i < tableStructure.size() && !(tableStructure.get(i).getAttributeName().equals(attributeName) && tableStructure.get(i).getTableName().equals(tableName))) {
+            i++;
+        }
+
+        if (i >= tableStructure.size()) {
+            return -1;
+        }
+
+        return i - 1;
     }
 
     // finds all entries in a table based on a condition
@@ -1298,5 +1408,184 @@ public class Main {
             }
         }
         return res;
+    }
+
+    public static ArrayList<Document> indexedNestedJoin(MongoDatabase mongoDatabase, ArrayList<Document> originalTable, ArrayList<TableAttribute> tableStructure, Selection selection) {
+        ArrayList<Join> joins = new ArrayList(selection.getJoins());
+
+        // process all the joins
+        while (joins.size() > 0) {
+            Join join = joins.get(0);
+            joins.remove(0);
+
+            // get all conditions referring to the current join table
+            ArrayList<WhereCondition> conditions = new ArrayList<>();
+            for (WhereCondition cond : selection.getConditions()) {
+                if (cond.getAttribute().getTableName().equals(join.getTable().getTableName())) {
+                    conditions.add(cond);
+                }
+            }
+
+            // find index of the join attribute in original table
+            int attrIndex = 0;
+            for (TableAttribute attr : tableStructure) {
+                if (attr.getAttributeName().equals(join.getAttribute1().getAttributeName()) &&
+                        attr.getTableName().equals(join.getAttribute1().getTableName())) {
+                    break;
+                }
+                attrIndex++;
+            }
+
+            // find index file name for the join table
+            String joinIndexName = "";
+            boolean isPK = false;
+            if (join.getAttribute2().equals(join.getTable().getpKAttrName())) {
+                isPK = true;
+            } else {
+                for (IndexFile index : join.getTable().getIndexFiles()) {
+                    if (index.getAttribute().equals(join.getAttribute2())) {
+                        joinIndexName = index.getIndexName();
+                        break;
+                    }
+                }
+            }
+
+            // open mongo index file
+            MongoCollection<Document> mongoCollectionIndex;
+            MongoCollection<Document> mongoCollection = mongoDatabase.getCollection(join.getTable().getTableName());;
+            if (isPK) {
+                mongoCollectionIndex = mongoCollection;
+            } else {
+                mongoCollectionIndex = mongoDatabase.getCollection(joinIndexName);
+            }
+
+            ArrayList<Document> result = new ArrayList();
+
+            // loop over original table entries
+            for (Document originalEntry : originalTable) {
+                // find value of the FK
+                String attrs = (String) originalEntry.get("attrs");
+                String origValue = attrs.split("#", -1)[attrIndex];
+                if (!origValue.equals("")) {
+                    // check for values in index
+                    FindIterable<Document> found = mongoCollectionIndex.find(Filters.eq("_id", origValue));
+
+                    if (isPK) {
+                        for (Document fromIndex : found) {
+                            // apply selection filters to values
+                            boolean noMatch = false;
+                            for (WhereCondition cond : conditions) {
+                                if (!meetsCondition(join.getTable(), fromIndex, cond)) {
+                                    noMatch = true;
+                                    break;
+                                }
+                            }
+
+                            // insert selected values into result if conditions are met
+                            if (!noMatch) {
+                                Document toInsert = new Document("_id", originalEntry.get("_id"));
+                                toInsert.append("attrs", attrs + fromIndex.get("_id") + "#" + fromIndex.get("attrs"));
+                                result.add(toInsert);
+                            }
+                        }
+                    } else {
+                        for (Document fromIndex : found) {
+                            // get id-s of found records
+                            String[] idList = ((String) fromIndex.get("main_id")).split("#", -1);
+
+                            // loop over records in the table from index values
+                            for (String id : idList) {
+                                FindIterable<Document> foundRec = mongoCollection.find(Filters.eq("_id", id));
+
+                                for (Document doc : foundRec) {
+                                    // apply selection filters to values
+                                    boolean noMatch = false;
+                                    for (WhereCondition cond : conditions) {
+                                        if (!meetsCondition(join.getTable(), doc, cond)) {
+                                            noMatch = true;
+                                            break;
+                                        }
+                                    }
+
+                                    // insert selected values into result if conditions are met
+                                    if (!noMatch) {
+                                        Document toInsert = new Document("_id", originalEntry.get("_id"));
+                                        toInsert.append("attrs", attrs + doc.get("_id") + "#" + doc.get("attrs"));
+                                        result.add(toInsert);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            originalTable = new ArrayList<>(result);
+
+            // extend tableStructure with the join table attributes
+            for (Attribute a : join.getTable().getAttributes()) {
+                tableStructure.add(new TableAttribute(join.getTable().getTableName(), a.getAttributeName()));
+            }
+        }
+
+        return originalTable;
+    }
+
+    // checks whether a row meets a condition
+    public static boolean meetsCondition(Table table, Document row, WhereCondition condition) {
+        // get value
+        String value;
+        int i = getValueIndex(table, condition.getAttribute().getAttributeName());
+        if (i == -1) {
+            value = (String) row.get("_id");
+        } else {
+            value = ((String) row.get("attrs")).split("#", -1)[i];
+        }
+
+        // check condition
+        int num;
+        int condNum;
+        switch (condition.getOperator()) {
+            case "=":
+                if (value.equals(condition.getValue())) {
+                    return true;
+                }
+                return false;
+            case "!=":
+                if (!value.equals(condition.getValue())) {
+                    return true;
+                }
+                return false;
+            case "<=":
+                num = Integer.parseInt(value);
+                condNum = Integer.parseInt(condition.getValue());
+                if (num <= condNum) {
+                    return true;
+                }
+                return false;
+            case "<":
+                num = Integer.parseInt(value);
+                condNum = Integer.parseInt(condition.getValue());
+                if (num < condNum) {
+                    return true;
+                }
+                return false;
+            case ">=":
+                num = Integer.parseInt(value);
+                condNum = Integer.parseInt(condition.getValue());
+                if (num >= condNum) {
+                    return true;
+                }
+                return false;
+            case ">":
+                num = Integer.parseInt(value);
+                condNum = Integer.parseInt(condition.getValue());
+                if (num > condNum) {
+                    return true;
+                }
+                return false;
+        }
+
+        return false;
     }
 }

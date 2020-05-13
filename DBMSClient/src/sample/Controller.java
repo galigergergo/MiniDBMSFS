@@ -168,7 +168,7 @@ public class Controller {
     @FXML
     private ChoiceBox<Table> selJoinChoiceBoxT;
     @FXML
-    private ChoiceBox<Attribute> selJoinChoiceBoxA1;
+    private ChoiceBox<TableAttribute> selJoinChoiceBoxA1;
     @FXML
     private ChoiceBox<Attribute> selJoinChoiceBoxA2;
     @FXML
@@ -846,7 +846,7 @@ public class Controller {
                     selJoinChoiceBoxT.getItems().add(temp);
                 }
                 for (Attribute temp : selFromChoiceBoxT.getValue().getAttributes()) {
-                    selJoinChoiceBoxA1.getItems().add(temp);
+                    selJoinChoiceBoxA1.getItems().add(new TableAttribute(selFromChoiceBoxT.getValue().getTableName(), temp.getAttributeName()));
                 }
 
                 selFromPane.setVisible(false);
@@ -908,7 +908,7 @@ public class Controller {
         selJoinCancelButton.setOnAction(e -> selJoinPane.setVisible(false));
         selJoinJoinButton.setOnAction(e -> {
             if (selJoinChoiceBoxT.getValue() != null && selJoinChoiceBoxA1.getValue() != null && selJoinChoiceBoxA2.getValue() != null) {
-                selection.addJoin(selJoinChoiceBoxT.getValue(), selJoinChoiceBoxA1.getValue().getAttributeName(), selJoinChoiceBoxA2.getValue().getAttributeName());
+                selection.addJoin(selJoinChoiceBoxT.getValue(), selJoinChoiceBoxA1.getValue(), selJoinChoiceBoxA2.getValue().getAttributeName());
 
                 selJoinChoiceBoxT.setValue(null);
                 selJoinChoiceBoxT.getItems().clear();
@@ -921,13 +921,18 @@ public class Controller {
                     selJoinChoiceBoxT.getItems().add(temp);
                 }
                 for (Attribute temp : selFromChoiceBoxT.getValue().getAttributes()) {
-                    selJoinChoiceBoxA1.getItems().add(temp);
+                    selJoinChoiceBoxA1.getItems().add(new TableAttribute(selFromChoiceBoxT.getValue().getTableName(), temp.getAttributeName()));
+                }
+                for (Join j : selection.getJoins()) {
+                    for (Attribute a : j.getTable().getAttributes()) {
+                        selJoinChoiceBoxA1.getItems().add(new TableAttribute(j.getTable().getTableName(), a.getAttributeName()));
+                    }
                 }
             }
         });
         selJoinAttrButton.setOnAction(e -> {
             if (selJoinChoiceBoxT.getValue() != null && selJoinChoiceBoxA1.getValue() != null && selJoinChoiceBoxA2.getValue() != null) {
-                selection.addJoin(selJoinChoiceBoxT.getValue(), selJoinChoiceBoxA1.getValue().getAttributeName(), selJoinChoiceBoxA2.getValue().getAttributeName());
+                selection.addJoin(selJoinChoiceBoxT.getValue(), selJoinChoiceBoxA1.getValue(), selJoinChoiceBoxA2.getValue().getAttributeName());
 
                 selAttrChoiceBoxF.setValue(null);
                 selAttrChoiceBoxF.getItems().clear();
@@ -1042,6 +1047,12 @@ public class Controller {
                     selection.addAttribute(new TableAttribute(selection.getTable().getTableName(), attr.getAttributeName()));
                     selection.addFunction("");
                 }
+                for (Join j : selection.getJoins()) {
+                    for (Attribute attr : j.getTable().getAttributes()) {
+                        selection.addAttribute(new TableAttribute(j.getTable().getTableName(), attr.getAttributeName()));
+                        selection.addFunction("");
+                    }
+                }
 
                 // send to the server
                 try {
@@ -1081,6 +1092,12 @@ public class Controller {
                 for (Attribute attr : selection.getTable().getAttributes()) {
                     selection.addAttribute(new TableAttribute(selection.getTable().getTableName(), attr.getAttributeName()));
                     selection.addFunction("");
+                }
+                for (Join j : selection.getJoins()) {
+                    for (Attribute attr : j.getTable().getAttributes()) {
+                        selection.addAttribute(new TableAttribute(j.getTable().getTableName(), attr.getAttributeName()));
+                        selection.addFunction("");
+                    }
                 }
 
                 selWhereChoiceBoxA.setValue(null);
