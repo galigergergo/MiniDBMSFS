@@ -46,6 +46,16 @@
               "indexName": "IDIndex",
               "isUnique": false,
               "attribute": "ID"
+            },
+            {
+              "indexName": "costumers_CategoryID_Index",
+              "isUnique": false,
+              "attribute": "CategoryID"
+            },
+            {
+              "indexName": "costumers_email_index",
+              "isUnique": false,
+              "attribute": "Email Address"
             }
           ]
         },
@@ -101,11 +111,6 @@
             },
             {
               "indexName": "Persons_AnimalID_Index",
-              "isUnique": false,
-              "attribute": "AnimalID"
-            },
-            {
-              "indexName": "TesztIndex",
               "isUnique": false,
               "attribute": "AnimalID"
             }
