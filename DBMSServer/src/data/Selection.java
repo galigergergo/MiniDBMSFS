@@ -12,6 +12,15 @@ public class Selection implements Serializable {
     private ArrayList<WhereCondition> conditions;
     private TableAttribute groupByAttribute;
     private WhereCondition havingCondition;
+    private String havingFunction;
+
+    public String getHavingFunction() {
+        return havingFunction;
+    }
+
+    public void setHavingFunction(String havingFunction) {
+        this.havingFunction = havingFunction;
+    }
 
     public Selection() {
         joins = new ArrayList<>();

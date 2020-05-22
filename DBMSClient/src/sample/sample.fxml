@@ -440,7 +440,7 @@
                   <Button fx:id="selWhereGroupByButton" layoutX="216.0" layoutY="292.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="Group by" textFill="WHITE" />
                </children>
             </Pane>
-            <Pane fx:id="selGroupByPane" layoutX="240.0" layoutY="45.0" prefHeight="418.0" prefWidth="380.0" style="-fx-background-color: #333333;">
+            <Pane fx:id="selGroupByPane" layoutX="240.0" layoutY="45.0" prefHeight="418.0" prefWidth="380.0" style="-fx-background-color: #333333;" visible="false">
                <children>
                   <Label layoutX="22.0" layoutY="14.0" text="Select - Group By" textFill="WHITE">
                      <font>
@@ -478,6 +478,12 @@
                      </font>
                   </Label>
                   <TextField fx:id="selHavingTextFieldV" layoutX="144.0" layoutY="292.0" prefHeight="25.0" prefWidth="200.0" />
+                  <Label layoutX="22.0" layoutY="330.0" text="Function:" textFill="WHITE">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </Label>
+                  <ChoiceBox fx:id="selHavingChoiceBoxF" layoutX="144.0" layoutY="328.0" prefHeight="25.0" prefWidth="200.0" />
                </children>
             </Pane>
             <Pane fx:id="selOutputPane" layoutX="240.0" layoutY="45.0" prefHeight="418.0" prefWidth="380.0" style="-fx-background-color: #333333;" visible="false">

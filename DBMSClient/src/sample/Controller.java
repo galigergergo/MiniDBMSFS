@@ -238,6 +238,8 @@ public class Controller {
     private ChoiceBox<String> selHavingChoiceBoxO;
     @FXML
     private TextField selHavingTextFieldV;
+    @FXML
+    private ChoiceBox<String> selHavingChoiceBoxF;
 
     // selected rows of table views
     private ObservableList<String> selectedRow = FXCollections.observableArrayList();
@@ -246,7 +248,7 @@ public class Controller {
     private final String[] attrTypes = {"int", "char", "varchar", "date"};
     private final String[] operatorTypes = {"=", "!=", "<", ">", "<=", ">="};
     private final String[] uniqueList = {"unique", "not unique"};
-    private final String[] functionList = {"count", "max"};
+    private final String[] functionList = {"min", "max", "avg", "count", "sum"};
     public void initialize() throws Exception{
         // establish connection with server
         Socket socket = new Socket("localhost", 54321);
@@ -1246,33 +1248,44 @@ public class Controller {
         });
         selWhereGroupByButton.setOnAction(e -> {
             if (conds.size() > 0) {
-                for(WhereCondition c : conds) {
+                for (WhereCondition c : conds) {
                     selection.addCondition(c);
                 }
-
-                selGroupByChoiceBoxA.setValue(null);
-                selGroupByChoiceBoxA.getItems().clear();
-
-                for (TableAttribute temp : selection.getAttributes()) {
-                    selGroupByChoiceBoxA.getItems().add(temp);
-                }
-
-                selHavingChoiceBoxA.setValue(null);
-                selHavingChoiceBoxO.setValue(null);
-                selHavingChoiceBoxA.getItems().clear();
-                selHavingChoiceBoxO.getItems().clear();
-                selHavingTextFieldV.setText("");
-
-                for (TableAttribute temp : selection.getAttributes()) {
-                    selHavingChoiceBoxA.getItems().add(temp);
-                }
-                for (String temp : operatorTypes) {
-                    selHavingChoiceBoxO.getItems().add(temp);
-                }
-
-                selWherePane.setVisible(false);
-                selGroupByPane.setVisible(true);
             }
+
+            selGroupByChoiceBoxA.setValue(null);
+            selGroupByChoiceBoxA.getItems().clear();
+
+            for (TableAttribute temp : selection.getAttributes()) {
+                selGroupByChoiceBoxA.getItems().add(temp);
+            }
+
+            selHavingChoiceBoxA.setValue(null);
+            selHavingChoiceBoxO.setValue(null);
+            selHavingChoiceBoxF.setValue(null);
+            selHavingChoiceBoxA.getItems().clear();
+            selHavingChoiceBoxO.getItems().clear();
+            selHavingChoiceBoxF.getItems().clear();
+            selHavingTextFieldV.setText("");
+
+            for (Attribute temp : selection.getTable().getAttributes()) {
+                selHavingChoiceBoxA.getItems().add(new TableAttribute(selection.getTable().getTableName(), temp.getAttributeName()));
+            }
+            for (Join j : selection.getJoins()) {
+                for (Attribute temp : j.getTable().getAttributes()) {
+                    selHavingChoiceBoxA.getItems().add(new TableAttribute(j.getTable().getTableName(), temp.getAttributeName()));
+                }
+            }
+            for (String temp : operatorTypes) {
+                selHavingChoiceBoxO.getItems().add(temp);
+            }
+            for (String temp : functionList) {
+                selHavingChoiceBoxF.getItems().add(temp);
+            }
+
+            selWherePane.setVisible(false);
+            selGroupByPane.setVisible(true);
+
         });
 
         // select - group by
