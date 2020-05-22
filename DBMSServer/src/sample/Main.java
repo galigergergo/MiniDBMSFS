@@ -12,10 +12,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -401,6 +398,7 @@ public class Main {
                         // value#value#value#...# string
                         Document document = new Document("_id", key);
                         document.append("attrs", value);
+                        result = "Success";
 
                         // check if our table is a child
                         // if so, check if the attr to which we are referring exists
@@ -479,6 +477,8 @@ public class Main {
                             }
                         }
                         if (!insertable) {
+                            os.writeObject(result);
+                            os.flush();
                             break;
                         }
 
