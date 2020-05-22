@@ -1,7 +1,6 @@
 package sample;
 
 import data.*;
-import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
@@ -233,6 +232,12 @@ public class Controller {
     private MenuItem select;
     @FXML
     private CheckBox selAttrCheckBox;
+    @FXML
+    private ChoiceBox<TableAttribute> selHavingChoiceBoxA;
+    @FXML
+    private ChoiceBox<String> selHavingChoiceBoxO;
+    @FXML
+    private TextField selHavingTextFieldV;
 
     // selected rows of table views
     private ObservableList<String> selectedRow = FXCollections.observableArrayList();
@@ -1225,20 +1230,6 @@ public class Controller {
                 for(WhereCondition c : conds) {
                     selection.addCondition(c);
                 }
-// db print
-//                System.out.println("db=" + selection.getDatabase());
-//                System.out.println("table=" + selection.getTable().getTableName());
-//                System.out.println("attribsPROJ:");
-//                for (TableAttribute ta : selection.getAttributes()) {
-//                    System.out.println("tableAttrName=" + ta.getTableName());
-//                    System.out.println("tableAttr=" + ta.getAttributeName());
-//                }
-//                System.out.println("\nCONDattrsSEL:");
-//                for (WhereCondition wc : selection.getConditions()) {
-//                    System.out.print("condition=" + wc.getAttribute().getAttributeName());
-//                    System.out.print(" " + wc.getOperator());
-//                    System.out.println(" " + wc.getValue());
-//                }
 
                 // send to the server
                 try {
@@ -1262,13 +1253,21 @@ public class Controller {
                 selGroupByChoiceBoxA.setValue(null);
                 selGroupByChoiceBoxA.getItems().clear();
 
-                for (Attribute temp : selection.getTable().getAttributes()) {
-                    selGroupByChoiceBoxA.getItems().add(new TableAttribute(selection.getTable().getTableName(), temp.getAttributeName()));
+                for (TableAttribute temp : selection.getAttributes()) {
+                    selGroupByChoiceBoxA.getItems().add(temp);
                 }
-                for (Join j : selection.getJoins()) {
-                    for (Attribute temp : j.getTable().getAttributes()) {
-                        selGroupByChoiceBoxA.getItems().add(new TableAttribute(j.getTable().getTableName(), temp.getAttributeName()));
-                    }
+
+                selHavingChoiceBoxA.setValue(null);
+                selHavingChoiceBoxO.setValue(null);
+                selHavingChoiceBoxA.getItems().clear();
+                selHavingChoiceBoxO.getItems().clear();
+                selHavingTextFieldV.setText("");
+
+                for (TableAttribute temp : selection.getAttributes()) {
+                    selHavingChoiceBoxA.getItems().add(temp);
+                }
+                for (String temp : operatorTypes) {
+                    selHavingChoiceBoxO.getItems().add(temp);
                 }
 
                 selWherePane.setVisible(false);
@@ -1281,6 +1280,10 @@ public class Controller {
         selGroupByOkButton.setOnAction(e -> {
             if (selGroupByChoiceBoxA.getValue() != null) {
                 selection.setGroupByAttribute(selGroupByChoiceBoxA.getValue());
+
+                if(selHavingChoiceBoxA.getValue() != null && selHavingChoiceBoxO.getValue() != null && !selHavingTextFieldV.getText().equals("")) {
+                    selection.setHavingCondition(new WhereCondition(selHavingChoiceBoxA.getValue(), selHavingChoiceBoxO.getValue(), selHavingTextFieldV.getText()));
+                }
 
                 // send to the server
                 try {

@@ -11,6 +11,7 @@ public class Selection implements Serializable {
     private ArrayList<TableAttribute> attributes;
     private ArrayList<WhereCondition> conditions;
     private TableAttribute groupByAttribute;
+    private WhereCondition havingCondition;
 
     public Selection() {
         joins = new ArrayList<>();
@@ -24,6 +25,14 @@ public class Selection implements Serializable {
         functions.clear();
         attributes.clear();
         conditions.clear();
+    }
+
+    public WhereCondition getHavingCondition() {
+        return havingCondition;
+    }
+
+    public void setHavingCondition(WhereCondition havingCondition) {
+        this.havingCondition = havingCondition;
     }
 
     public void addJoin(Table table, TableAttribute attr1, String attr2) {

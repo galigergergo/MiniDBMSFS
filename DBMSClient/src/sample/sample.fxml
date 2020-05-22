@@ -440,21 +440,44 @@
                   <Button fx:id="selWhereGroupByButton" layoutX="216.0" layoutY="292.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="Group by" textFill="WHITE" />
                </children>
             </Pane>
-            <Pane fx:id="selGroupByPane" layoutX="240.0" layoutY="45.0" prefHeight="178.0" prefWidth="380.0" style="-fx-background-color: #333333;" visible="false">
+            <Pane fx:id="selGroupByPane" layoutX="240.0" layoutY="45.0" prefHeight="418.0" prefWidth="380.0" style="-fx-background-color: #333333;">
                <children>
                   <Label layoutX="22.0" layoutY="14.0" text="Select - Group By" textFill="WHITE">
                      <font>
                         <Font size="34.0" />
                      </font>
                   </Label>
-                  <Button fx:id="selGroupByOkButton" layoutX="249.0" layoutY="136.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="OK" textFill="WHITE" />
-                  <Button fx:id="selGroupByCancelButton" layoutX="292.0" layoutY="136.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="Cancel" textFill="WHITE" />
+                  <Button fx:id="selGroupByOkButton" layoutX="249.0" layoutY="367.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="OK" textFill="WHITE" />
+                  <Button fx:id="selGroupByCancelButton" layoutX="292.0" layoutY="367.0" mnemonicParsing="false" style="-fx-background-color: #666666;" text="Cancel" textFill="WHITE" />
                   <Label layoutX="22.0" layoutY="89.0" text="Attribute name:" textFill="WHITE">
                      <font>
                         <Font size="15.0" />
                      </font>
                   </Label>
                   <ChoiceBox fx:id="selGroupByChoiceBoxA" layoutX="144.0" layoutY="87.0" prefHeight="25.0" prefWidth="200.0" />
+                  <Label layoutX="22.0" layoutY="146.0" text="Select - Having" textFill="WHITE">
+                     <font>
+                        <Font size="34.0" />
+                     </font>
+                  </Label>
+                  <Label layoutX="22.0" layoutY="221.0" text="Attribute name:" textFill="WHITE">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </Label>
+                  <ChoiceBox fx:id="selHavingChoiceBoxA" layoutX="144.0" layoutY="219.0" prefHeight="25.0" prefWidth="200.0" />
+                  <Label layoutX="22.0" layoutY="257.0" text="Operator:" textFill="WHITE">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </Label>
+                  <ChoiceBox fx:id="selHavingChoiceBoxO" layoutX="144.0" layoutY="255.0" prefHeight="25.0" prefWidth="200.0" />
+                  <Label layoutX="22.0" layoutY="294.0" text="Value:" textFill="WHITE">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </Label>
+                  <TextField fx:id="selHavingTextFieldV" layoutX="144.0" layoutY="292.0" prefHeight="25.0" prefWidth="200.0" />
                </children>
             </Pane>
             <Pane fx:id="selOutputPane" layoutX="240.0" layoutY="45.0" prefHeight="418.0" prefWidth="380.0" style="-fx-background-color: #333333;" visible="false">

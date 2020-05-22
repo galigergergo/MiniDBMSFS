@@ -425,7 +425,6 @@ public class Main {
                                             while (i < attrList.size() && !attrList.get(i).equals(attr)) {
                                                 if (currentTable.getpKAttrName().equals(attrList.get(i))) {
                                                     pkFound = true;
-                                                    break;
                                                 }
                                                 i++;
                                             }
