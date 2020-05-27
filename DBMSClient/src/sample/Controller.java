@@ -1006,7 +1006,7 @@ public class Controller {
                     }
                     i++;
                 }
-                selAttrChoiceBoxA.getItems().remove(i);
+//                selAttrChoiceBoxA.getItems().remove(i);
             }
         });
         // update selected row of table view
@@ -1063,6 +1063,8 @@ public class Controller {
 
                 // send to the server
                 try {
+                    System.out.println("selAttrOk1");
+                    System.out.println("funcs: " + selection.getFunctions());
                     os.writeUTF("select");
                     os.flush();
                     os.writeObject(selection);
@@ -1083,6 +1085,8 @@ public class Controller {
 
                 // send to the server
                 try {
+                    System.out.println("selAttrOk2");
+                    System.out.println("funcs: " + selection.getFunctions());
                     os.writeUTF("select");
                     os.flush();
                     os.writeObject(selection);
@@ -1235,8 +1239,12 @@ public class Controller {
 
                 // send to the server
                 try {
+                    System.out.println("selWhereOk");
+                    System.out.println("funcs: " + selection.getFunctions());
                     os.writeUTF("select");
                     os.flush();
+                    System.out.println("selecion:" + selection);
+                    System.out.println("funcs:" + selection.getFunctions());
                     os.writeObject(selection);
                     os.flush();
                 } catch (Exception ex) {
@@ -1296,10 +1304,13 @@ public class Controller {
 
                 if(selHavingChoiceBoxA.getValue() != null && selHavingChoiceBoxO.getValue() != null && !selHavingTextFieldV.getText().equals("")) {
                     selection.setHavingCondition(new WhereCondition(selHavingChoiceBoxA.getValue(), selHavingChoiceBoxO.getValue(), selHavingTextFieldV.getText()));
+                    selection.setHavingFunction(selHavingChoiceBoxF.getValue());
                 }
 
                 // send to the server
                 try {
+                    System.out.println("selGroupByOk");
+                    System.out.println("funcs: " + selection.getFunctions());
                     os.writeUTF("select");
                     os.flush();
                     os.writeObject(selection);

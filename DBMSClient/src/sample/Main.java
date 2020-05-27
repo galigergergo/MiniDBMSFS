@@ -6,6 +6,12 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+// 100k row table: group by:
+// OK: simple GroupBy
+// OK: GroupBy, with 1 and 2 functions as projection
+// OK: GroupBy, 1 funcSelect, 1 HavingFunc
+// OK: GroupBy, 4 FuncSelect, 1 HavingFunc
+
 public class Main extends Application {
 
     @Override

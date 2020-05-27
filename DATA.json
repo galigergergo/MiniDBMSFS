@@ -227,6 +227,91 @@
               "attribute": "Age"
             }
           ]
+        },
+        {
+          "tableName": "categories",
+          "fileName": "afilename",
+          "rowLength": 123,
+          "attributes": [
+            {
+              "attributeName": "ID",
+              "type": "int",
+              "length": 0,
+              "isUnique": true
+            },
+            {
+              "attributeName": "CostumerGroup",
+              "type": "int",
+              "length": 0,
+              "isUnique": false
+            },
+            {
+              "attributeName": "Salary",
+              "type": "int",
+              "length": 0,
+              "isUnique": false
+            }
+          ],
+          "pKAttrName": "ID",
+          "foreignKeys": [],
+          "indexFiles": [
+            {
+              "indexName": "IDIndex",
+              "isUnique": false,
+              "attribute": "ID"
+            },
+            {
+              "indexName": "categories_costumerGroupIndex",
+              "isUnique": false,
+              "attribute": "CostumerGroup"
+            }
+          ]
+        },
+        {
+          "tableName": "Diakok",
+          "fileName": "afilename",
+          "rowLength": 123,
+          "attributes": [
+            {
+              "attributeName": "id",
+              "type": "int",
+              "length": 0,
+              "isUnique": true
+            },
+            {
+              "attributeName": "CsoportID",
+              "type": "int",
+              "length": 0,
+              "isUnique": false
+            },
+            {
+              "attributeName": "Media",
+              "type": "int",
+              "length": 0,
+              "isUnique": false
+            },
+            {
+              "attributeName": "Nev",
+              "type": "varchar",
+              "length": 10,
+              "isUnique": false
+            },
+            {
+              "attributeName": "Kor",
+              "type": "int",
+              "length": 0,
+              "isUnique": false
+            }
+          ],
+          "pKAttrName": "id",
+          "foreignKeys": [],
+          "indexFiles": [
+            {
+              "indexName": "idIndex",
+              "isUnique": false,
+              "attribute": "id"
+            }
+          ]
         }
       ]
     }

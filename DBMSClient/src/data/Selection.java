@@ -3,6 +3,9 @@ package data;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+// 4:08 PM join start
+// 10:03:34 PM WWHTHTHTHFJFHFFH. still no STAAAAP
+
 public class Selection implements Serializable {
     private String database;
     private Table table;

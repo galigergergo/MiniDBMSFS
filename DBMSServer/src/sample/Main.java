@@ -35,11 +35,14 @@ public class Main {
         }
         System.out.println("Connected to MANGO");
 
+        // create index on categories
+        // 9:03:39 PM
+
         // // beszuras 100 000 sort a costumers tablaba
         // // Name, Age, Email Address, Category ID
-//        MongoDatabase Ddatabase2 = mongoClients.getDatabase("MyDb");
+        MongoDatabase Ddatabase2 = mongoClients.getDatabase("MyDb");
 //        // connecting to Collection from MANGO
-//        MongoCollection<Document> mongoCollection2 = Ddatabase2.getCollection("costumers");
+        MongoCollection<Document> mongoCollection2 = Ddatabase2.getCollection("categories");
 ////
 //        FileWriter myWriter = new FileWriter("sorted_thousand_rows.txt");
 
@@ -65,45 +68,49 @@ public class Main {
 //        myWriter.close();
 //
 //        final java.util.Random rand = new java.util.Random();
-//        final String lexicon = "qwertyuioplkjhgfdsazxcvbnm";
-//
+////        final String lexicon = "qwertyuioplkjhgfdsazxcvbnm";
+////
 //        int N = 100000;
+////        int N = 0;
 //        for (int i = 0; i < N; i++) {
 //            StringBuilder attrs = new StringBuilder();
 //            StringBuilder builder = new StringBuilder();
-//
-//            // name
-//            int length = rand.nextInt(5)+3;
-//            for(int j = 0; j < length; j++) {
-//                builder.append(lexicon.charAt(rand.nextInt(lexicon.length())));
-//            }
-//            String Name = builder.toString();
-//
-//            // age
+////
+////            // name
+////            int length = rand.nextInt(5)+3;
+////            for(int j = 0; j < length; j++) {
+////                builder.append(lexicon.charAt(rand.nextInt(lexicon.length())));
+////            }
+////            String Name = builder.toString();
+////
+////            // age
+//            // salary
 //            int Age = rand.nextInt(95) + 5;
-//
-//            // email
-//            if (rand.nextInt(10) <= 3) {
-//                builder = new StringBuilder("test@nomail.com");
-//            } else {
-//                final String lexiconemail = "qwertyuioplkjhgfdsazxcvbnm01234567890-_.";
-//                builder = new StringBuilder();
-//                length = rand.nextInt(3) + 4;
-//                for (int j = 0; j < length; j++) {
-//                    builder.append(lexiconemail.charAt(rand.nextInt(lexiconemail.length())));
-//                }
-//                builder.append('@');
-//                String[] emails = {"yahoo.com", "yahoo.ro", "yahoo.ru", "yahoo.hu", "gmail.com", "freemail.hu", "citromail.hu", "scs.ubbcluj.ro", "math.ubbcluj.ro", "cs.ubbcluj.ro"};
-//                int index = rand.nextInt(emails.length);
-//                builder.append(emails[index]);
-//            }
-//            String Email = builder.toString();
-//
-//            // category
+////
+////            // email
+////            if (rand.nextInt(10) <= 3) {
+////                builder = new StringBuilder("test@nomail.com");
+////            } else {
+////                final String lexiconemail = "qwertyuioplkjhgfdsazxcvbnm01234567890-_.";
+////                builder = new StringBuilder();
+////                length = rand.nextInt(3) + 4;
+////                for (int j = 0; j < length; j++) {
+////                    builder.append(lexiconemail.charAt(rand.nextInt(lexiconemail.length())));
+////                }
+////                builder.append('@');
+////                String[] emails = {"yahoo.com", "yahoo.ro", "yahoo.ru", "yahoo.hu", "gmail.com", "freemail.hu", "citromail.hu", "scs.ubbcluj.ro", "math.ubbcluj.ro", "cs.ubbcluj.ro"};
+////                int index = rand.nextInt(emails.length);
+////                builder.append(emails[index]);
+////            }
+////            String Email = builder.toString();
+////
+////            // category
+//            // costumerGroup
 //            int Category = rand.nextInt(50) + 1;
-//
-//
-//            attrs.append(Name).append('#').append(Age).append('#').append(Email).append('#').append(Category).append('#');
+////
+////
+////            attrs.append(Name).append('#').append(Age).append('#').append(Email).append('#').append(Category).append('#');
+//            attrs.append(Age).append('#').append(Category).append('#');
 //            try {
 //                mongoCollection2.insertOne(new Document("_id", Integer.toString(i)).append("attrs", attrs.toString()));
 //            } catch (Exception e) {
@@ -586,7 +593,6 @@ public class Main {
                         // deletable docs
                         if (T != null) {
                             delDocs = findElements(T, mongoCollection, condition);
-                            System.out.println(T.getTableName());
                             boolean child = false;
                             // the table in which a FK is pointing to our attr
 //                        String refTable = "";
@@ -770,7 +776,13 @@ public class Main {
                         break;
                     case "select":
                         Selection selection = (Selection) is.readObject();
-                        System.out.println(selection.getDatabase());
+
+                        Database db = null;
+                        for (Database database : databases.Databases) {
+                            if (database.getDataBaseName().equals(selection.getDatabase())) {
+                                db = database;
+                            }
+                        }
 
                         T = selection.getTable();
                         ArrayList<Join> joins = selection.getJoins();
@@ -778,7 +790,7 @@ public class Main {
                         mongoDatabase = mongoClients.getDatabase(selection.getDatabase());
                         mongoCollection = mongoDatabase.getCollection(T.getTableName());
 
-                        ArrayList<String> toSend;
+                        ArrayList<String> toSend = new ArrayList<>();
                         ArrayList<Document> selectedDocs;
                         // if joins required
                         if (selection.getJoins().size() > 0) {
@@ -805,10 +817,6 @@ public class Main {
                             // join and selection
                             ArrayList<Document> joined = indexedNestedJoin(mongoDatabase, selectedDocs, tableStructure, selection);
 
-                            for (Document doc : joined) {
-                                System.out.println((String) doc.get("attrs"));
-                            }
-
                             // update table structure
                             ArrayList<TableAttribute> tableStructurePro = new ArrayList<>();
                             for (Attribute a : T.getAttributes()) {
@@ -820,29 +828,59 @@ public class Main {
                                 }
                             }
 
-                            // projection
-                            toSend = projectionJoin(selection, joined, tableStructurePro);
-                            System.out.println("Join toSend ready to be sent");
-                            for (String st : toSend) {
-                                System.out.println(st);
+                            if (selection.getGroupByAttribute() == null) /* No GroupBy */ {
+                                // projection
+                                toSend = projectionJoin(selection, joined, tableStructurePro);
+                            } else {
+                                // GroupBy
+                                toSend = groupBy(selection, joined, tableStructurePro, db);
                             }
+
                         } else {
-                            // if each proj and where has index
-                            if (eachHasIndex(databases, selection)) {
-                                toSend = eachHasIndexProjectionSelection(selection, mongoDatabase);
-                            } else if (selection.getConditions().size() == 0) {
+                            if (selection.getGroupByAttribute() == null) /* No GroupBy */ {
+                                // if each proj and where has index
+                                if (eachHasIndex(databases, selection)) {
+                                    toSend = eachHasIndexProjectionSelection(selection, mongoDatabase);
+
+                                    // send data
+                                    for (String output : toSend) {
+                                        os.writeObject(output);
+                                        os.flush();
+                                    }
+
+                                    os.writeObject("over");
+                                    os.flush();
+                                    break;
+                                }
+                            }
+                            if (selection.getConditions().size() == 0) {
                                 // if no where. hehe. we are no-where
                                 // selection ie all docs
                                 selectedDocs = iterableToList(mongoCollection.find());
-                                // projection
-                                toSend = projection(selection, selectedDocs, databases);
+
+                                if (selection.getGroupByAttribute() == null) /* No GroupBy */ {
+                                    // projection
+                                    toSend = projection(selection, selectedDocs, databases);
+                                } else {
+                                    // create TableStructure
+                                    ArrayList<TableAttribute> tableStructure = createTableStructure(T);
+                                    // GroupBy
+                                    toSend = groupBy(selection, selectedDocs, tableStructure, db);
+                                }
                             } else {
                                 // REAL SELECTION WITH WHERE
                                 // szelekcio, metszet, rendezes, duplikatumoktol megszabadulas -> selectedDocs
                                 selectedDocs = findElementsOnWhere(T, mongoCollection, selection.getConditions(), mongoDatabase);
 
-                                // projection
-                                toSend = projection(selection, selectedDocs, databases);
+                                if (selection.getGroupByAttribute() == null) /* No GroupBy */ {
+                                    // projection
+                                    toSend = projection(selection, selectedDocs, databases);
+                                } else {
+                                    // create TableStructure
+                                    ArrayList<TableAttribute> tableStructure = createTableStructure(T);
+                                    // GroupBy
+                                    toSend = groupBy(selection, selectedDocs, tableStructure, db);
+                                }
                             }
                         }
 
@@ -862,6 +900,17 @@ public class Main {
         os.close();
         s.close();
         ss.close();
+    }
+
+    // create tableStructure arrayList
+    public static ArrayList<TableAttribute> createTableStructure(Table table) {
+        ArrayList<TableAttribute> tableStructure = new ArrayList<>();
+
+        for (Attribute attr : table.getAttributes()) {
+            tableStructure.add(new TableAttribute(table.getTableName(), attr.getAttributeName()));
+        }
+
+        return tableStructure;
     }
 
     // check if there is index on every attribute on proj and where
@@ -988,8 +1037,6 @@ public class Main {
             }
         }
 
-        System.out.println("after selection");
-
         int pkIndex = -1;
         // make selections -> arraylist of iterables
         ArrayList<FindIterable<Document>> iterables = new ArrayList<>();
@@ -1031,8 +1078,6 @@ public class Main {
                 }
             }
         }
-
-        System.out.println("after iterables");
 
         // merge by ids -> bigSet
         // for: all ids in the firstSet
@@ -1160,7 +1205,6 @@ public class Main {
     // get index of a value in attrs field of collection
     public static int getValueIndex(Table table, String attributeName) {
         // if pk return -1
-
         if (table.getpKAttrName().equals(attributeName)) {
             return -1;
         }
@@ -1196,6 +1240,41 @@ public class Main {
         }
 
         return i - 1;
+    }
+
+    // get index of a value in tableStructure --> for GroupBY
+    public static int getValueIndexStructureGroupBy(ArrayList<TableAttribute> tableStructure, String attributeName, String tableName, Database database) {
+        // if attrName is PK in first table
+        Table t = null;
+        for (Table table : database.getTables()) {
+            if (table.getTableName().equals(tableStructure.get(0).getTableName())) {
+                t = table;
+                if (table.getpKAttrName().equals(attributeName) && table.getTableName().equals(tableName)) {
+                    return -1;
+                }
+            }
+        }
+
+        int i = 0;
+        boolean foundPK = false;
+        while (i < tableStructure.size() && !(tableStructure.get(i).getAttributeName().equals(attributeName) && tableStructure.get(i).getTableName().equals(tableName))) {
+            if (tableStructure.get(0).getTableName().equals(tableStructure.get(i).getTableName()) && t.getpKAttrName().equals(tableStructure.get(i).getAttributeName())) {
+                foundPK = true;
+            }
+            i++;
+        }
+
+        if (i >= tableStructure.size()) {
+            // not found
+            return -1;
+        }
+
+        if (foundPK) {
+            // need to skip one if pk of first table was found. because in document's "attrs" field, the id is not present
+            i--;
+        }
+
+        return i;
     }
 
     // finds all entries in a table based on a condition
@@ -1506,6 +1585,7 @@ public class Main {
         return res;
     }
 
+    // indexed nestedJoin
     public static ArrayList<Document> indexedNestedJoin(MongoDatabase mongoDatabase, ArrayList<Document> originalTable, ArrayList<TableAttribute> tableStructure, Selection selection) {
         ArrayList<Join> joins = new ArrayList<>(selection.getJoins());
 
@@ -1544,6 +1624,9 @@ public class Main {
                         break;
                     }
                 }
+            }
+            if (joinIndexName.equals("") && !isPK) {
+                return new ArrayList<>();
             }
 
             // open mongo index file
@@ -1666,4 +1749,307 @@ public class Main {
 
         return false;
     }
+
+    // creates a map by a group by attribute and a function (ie avg, sum, max...)
+    public static Map<String, Integer> havingFunction(TableAttribute groupByAttribute, String function, TableAttribute attrOfFunction, ArrayList<TableAttribute> tableStructure, Database database, ArrayList<Document> docs) {
+        Map<String, Integer> map = new HashMap<>();
+
+        // get index of function in tableStructure
+        int funcIndex = getValueIndexStructureGroupBy(tableStructure, attrOfFunction.getAttributeName(),attrOfFunction.getTableName(), database);
+        int GBindex = getValueIndexStructureGroupBy(tableStructure, groupByAttribute.getAttributeName(), groupByAttribute.getTableName(), database);
+
+        // another map for avg
+        Map<String, Integer> avgMap = new HashMap<>();
+
+        for (Document doc : docs) {
+            String GBattr;
+            if (GBindex == -1) {
+                // pk
+                GBattr = (String) doc.get("_id");
+            } else {
+                String attrs = (String) doc.get("attrs");
+                GBattr = attrs.split("#", -1)[GBindex];
+            }
+
+            // attribute on which the function is on
+            String funcAttr;
+            if (funcIndex == -1) {
+                // pk
+                funcAttr = (String) doc.get("_id");
+            } else {
+                String attrs = (String) doc.get("attrs");
+                funcAttr = attrs.split("#", -1)[funcIndex];
+            }
+
+            try {
+                switch (function) {
+                    case "count":
+                        if (map.containsKey(GBattr)) {
+                            int valInMap = map.get(GBattr);
+                            map.replace(GBattr, valInMap + 1);
+                        } else {
+                            map.put(GBattr, 1);
+                        }
+                        break;
+
+                    case "sum":
+                        int valInDoc = Integer.parseInt(funcAttr);
+                        if (map.containsKey(GBattr)) {
+                            int valInMap = map.get(GBattr);
+                            map.replace(GBattr, valInDoc + valInMap);
+                        } else {
+                            map.put(GBattr, valInDoc);
+                        }
+                        break;
+
+                    case "max":
+                        valInDoc = Integer.parseInt(funcAttr);
+                        if (map.containsKey(GBattr)) {
+                            int valInMap = map.get(GBattr);
+                            if (valInMap < valInDoc) {
+                                map.replace(GBattr, valInDoc);
+                            }
+                        } else {
+                            map.put(GBattr, valInDoc);
+                        }
+                        break;
+
+                    case "min":
+                        valInDoc = Integer.parseInt(funcAttr);
+                        if (map.containsKey(GBattr)) {
+                            int valInMap = map.get(GBattr);
+                            if (valInMap > valInDoc) {
+                                map.replace(GBattr, valInDoc);
+                            }
+                        } else {
+                            map.put(GBattr, valInDoc);
+                        }
+                        break;
+
+                    case "avg":
+                        valInDoc = Integer.parseInt(funcAttr);
+
+                        // sum
+                        if (map.containsKey(GBattr)) {
+                            int valInMap = map.get(GBattr);
+                            map.replace(GBattr, valInDoc + valInMap);
+                        } else {
+                            map.put(GBattr, valInDoc);
+                        }
+
+                        // count
+                        if (avgMap.containsKey(GBattr)) {
+                            int valInMap = avgMap.get(GBattr);
+                            avgMap.replace(GBattr, valInMap + 1);
+                        } else {
+                            avgMap.put(GBattr, 1);
+                        }
+                        break;
+                }
+            } catch (Exception ignored) {
+                // if not number
+            }
+        }
+
+        if (function.equals("avg")) {
+            for (String key : map.keySet()) {
+                // sum / count
+                map.replace(key, map.get(key) / avgMap.get(key));
+            }
+        }
+
+        return map;
+    }
+
+    // groupBy after Wheres and Joins
+    public static ArrayList<String> groupBy(Selection selection, ArrayList<Document> docs, ArrayList<TableAttribute> tableStructure, Database database) {
+        ArrayList<String> toSend;
+        TableAttribute groupByAttribute =  selection.getGroupByAttribute();
+
+        int GBindex;
+        // this will be one in minus, because the ID is the first, but in attrs field, there's no ID. so skip it
+        GBindex = getValueIndexStructureGroupBy(tableStructure, groupByAttribute.getAttributeName(), groupByAttribute.getTableName(), database);
+
+        ArrayList<String> functions = new ArrayList<>();
+        ArrayList<TableAttribute> funcAttrs = new ArrayList<>();
+        int i = 0;
+        for (String func : selection.getFunctions()) {
+            if (!func.equals("")) {
+                functions.add(func);
+                funcAttrs.add(selection.getAttributes().get(i));
+            }
+            i++;
+        }
+        if (selection.getHavingFunction() != null) {
+            functions.add(selection.getHavingFunction());
+            funcAttrs.add(selection.getHavingCondition().getAttribute());
+        }
+
+        if (docs == null) {
+            return groupByProjection(new ArrayList<>(), selection, new HashMap<>());
+        }
+
+        // if no function
+        if (functions.isEmpty()) {
+            Set<String> set = new HashSet<>();
+            for (Document doc : docs) {
+                if (GBindex == -1) {
+                    // pk
+                    set.add(doc.get("_id") + "#");
+                } else {
+                    String attrs = (String) doc.get("attrs");
+                    set.add(attrs.split("#", -1)[GBindex] + "#");
+                }
+            }
+            String firstRow = groupByAttribute.getTableName() + " " + groupByAttribute.getAttributeName() + "#";
+
+            toSend = new ArrayList<>();
+            toSend.add(firstRow);
+            toSend.addAll(set);
+        } else {
+            List<Map<String, Integer>> mapList = new ArrayList<>();
+
+            i = 0;
+            for (String func : functions) {
+                mapList.add(havingFunction(groupByAttribute, func, funcAttrs.get(i), tableStructure, database, docs));
+                i++;
+            }
+
+            Map<String, Integer> condMap = new HashMap<>();
+
+            if (selection.getHavingFunction() != null) {
+                // if having
+
+                condMap = havingCondition(selection, mapList.get(mapList.size() - 1));
+                mapList.remove(mapList.size() - 1);
+
+                // intersect
+                mapList = havingIntersect(mapList, condMap);
+            }
+
+            // projection
+            toSend = groupByProjection(mapList, selection, condMap);
+        }
+
+        return toSend;
+    }
+
+    // puts the condition on map
+    public static Map<String, Integer> havingCondition(Selection selection, Map<String, Integer> map) {
+        Map<String, Integer> newMap = new HashMap<>();
+        WhereCondition cond = selection.getHavingCondition();
+        String op = cond.getOperator();
+        int val = Integer.parseInt(cond.getValue());
+        for (String key : map.keySet()) {
+            int valInMap = map.get(key);
+            switch (op) {
+                case "=":
+                    if (valInMap == val) {
+                        newMap.put(key, valInMap);
+                    }
+                    break;
+
+                case "!=":
+                    if (valInMap != val) {
+                        newMap.put(key, valInMap);
+                    }
+                    break;
+
+                case "<":
+                    if (valInMap < val) {
+                        newMap.put(key, valInMap);
+                    }
+                    break;
+
+                case "<=":
+                    if (valInMap <= val) {
+                        newMap.put(key, valInMap);
+                    }
+                    break;
+
+                case ">":
+                    if (valInMap > val) {
+                        newMap.put(key, valInMap);
+                    }
+                    break;
+
+                case ">=":
+                    if (valInMap >= val) {
+                        newMap.put(key, valInMap);
+                    }
+                    break;
+            }
+        }
+
+        return newMap;
+    }
+
+    // intersect after Having condition
+    public static List<Map<String, Integer>> havingIntersect(List<Map<String, Integer>> mapList, Map<String, Integer> condMap) {
+        List<Map<String, Integer>> newList = new ArrayList<>();
+
+        for (Map<String, Integer> map : mapList) {
+
+            Map<String, Integer> newMap = new HashMap<>();
+            for (String key : condMap.keySet()) {
+                newMap.put(key, map.get(key));
+            }
+            newList.add(newMap);
+        }
+
+        return newList;
+    }
+
+    public static ArrayList<String> groupByProjection(List<Map<String, Integer>> mapList, Selection selection, Map<String, Integer> condMap) {
+        // first row.
+        StringBuilder firstRow = new StringBuilder();
+
+        int i = 0;
+        // if group by attr is in projection
+        boolean groupAttr = false;
+        ArrayList<String> functions = selection.getFunctions();
+        for (TableAttribute ta : selection.getAttributes()) {
+            if (!functions.get(i).equals("")) {
+                firstRow.append(functions.get(i)).append("(").
+                        append(ta.getTableName()).append(" ").
+                        append(ta.getAttributeName()).append(")#");
+            } else {
+                groupAttr = true;
+            }
+            i++;
+        }
+        if (groupAttr) {
+            // group by attr
+            firstRow.append(selection.getGroupByAttribute().getTableName()).append(" ").
+                    append(selection.getGroupByAttribute().getAttributeName()).append("#");
+        }
+
+        ArrayList<String> toSend = new ArrayList<>();
+        toSend.add(firstRow.toString());
+
+        if (mapList.size() > 0) {
+            // add to output
+            Set<String> keySet = mapList.get(0).keySet();
+            // for every key, get value from maps and append
+            for (String key : keySet) {
+                StringBuilder row = new StringBuilder();
+                for (Map<String, Integer> map : mapList) {
+                    row.append(map.get(key)).append("#");
+                }
+
+                if (groupAttr) {
+                    row.append(key).append("#");
+                }
+
+                toSend.add(row.toString());
+            }
+        } else {
+            // if maplist is empty -> only put keys
+            Set<String> keyset = condMap.keySet();
+            keyset.forEach((k) -> toSend.add(k + "#"));
+        }
+
+        return toSend;
+    }
+
 }
