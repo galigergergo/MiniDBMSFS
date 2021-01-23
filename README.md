@@ -18,4 +18,8 @@ Students:
 - Galiger Gergő
 - Jánosi József-Hunor
 
+Snapshots for Demo:
+- ![alt text](https://github.com/galigergergo/MiniDBMSFS/blob/master/img/select_result.png?raw=false)
+- ![alt text](https://github.com/galigergergo/MiniDBMSFS/blob/master/img/where_condition.png?raw=false)
+
 :8ball:
