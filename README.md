@@ -14,7 +14,7 @@ Done:
 
 <p>The project was done as an assignment for the Databases2 class, during our IV. semester at Babes-Bolyai University, Cluj-Napoca, during our Bachelor's Degree in Computer Science<p>
 
-<p>Students:<p>
+Students:
 - Galiger Gergő
 - Jánosi József-Hunor
 
